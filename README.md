@@ -1,4 +1,7 @@
 # wiretap
+#### A Clojure library for adding generic trace support without having to modify code.
+
+</br>
 
 <img src="./wiretap.jpg" title="wiretap" width="50%" align="right"/>
 
@@ -12,12 +15,91 @@
 > 
 > To install or to use such a device.
 
- Given a clojure [var](https://clojure.org/reference/vars) whose value (content) implements Fn, i.e was created by fn - wiretap lets you `install!` a custom function that will be passed a map of _contextual_ data (and whose return value is ignored) both **pre** and **post** invocation of the original var value. In essence this is how a _trace_ is calculated. By allowing the user to provide their own function, wiretap can be used for multiple different purposes.
+ Given a [var](https://clojure.org/reference/vars) whose value implements Fn, i.e was created by fn - wiretap lets you `install!` a side effecting function `f` that will be called both **pre** and **post** invocation of the var's original value.
+ 
+This pattern captures the _essence_ of a trace. By allowing a custom function `f`, wiretap can be used for multiple different purposes.
+
+ # API
+
+ ## `wiretap.wiretap/install!`
+ ```clojure
+ (install! [f vars])
+ ```
+
+For every applicable var in vars - removes any existing wiretap and alters
+the root binding to be a variadic function closing over the value `g` of the 
+var and the user provided function `f`.
+
+> A var is considered applicable if its metadata does not contain the 
+> key `:wiretap.wiretap/exclude` and its value implements Fn, i.e. is an 
+> object created via `fn`.
+
+When the resulting "wiretapped" function is called, a map representing the 
+**context** of the call is first passed to `f` before the result is computed 
+by applying `g` to to any args provided. `f` is then called with an updated 
+context before the result is returned. In both cases, `f` is executed within 
+a `try/catch` on the same thread. The result of calling `f` is discarded.
+
+Returns a coll of all modified vars.
+
+The following contextual data is will **always** be present in the map passed 
+to `f`:
+
+| Key         | Value                                                            |
+| ----------- | ---------------------------------------------------------------- |
+| `:id`       | Uniquely identifies the call. Same value for pre and post calls. |
+| `:name`     | A symbol. Taken from the _meta_ of the var.                      |
+| `:ns`       | A namespace. Taken from the _meta_ of the var.                   |
+| `:function` | The value that will be applied to the value of `:args`.          |
+| `:thread`   | The name of the thread.                                          |
+| `:stack`    | The current stacktrace.                                          |
+| `:depth`    | Number of _wiretapped_ function calls on the stack.              |
+| `:args`     | The seq of args that value of `:function` will be applied to.    |
+| `:start`    | Nanoseconds since some fixed but arbitrary origin time.          |
+| `:parent`   | The context of the previous wiretapped function on the stack.    |
+
+### Pre invocation
+
+When `f` is called **pre** invocation the following information will also be present.
+| Key     | Value                                                                  |
+| ------- | ---------------------------------------------------------------------- |
+| `:pre?` | `true` |
+
+### Post invocation
+
+When `f` is called **post** invocation the following information will also be present.
+
+| Key       | Value                                                                             |
+| --------- | --------------------------------------------------------------------------------- |
+| `:post?`  | `true`           |
+| `:stop`   | Nanoseconds since some fixed but arbitrary origin time.                           |
+| `:result` | The result computed by applying the value of `:function` to the value of `:args`. |
+| `:error`  | Any exception caught during computation of the result.                            |
 
 
-<br/>
 
+ ## `wiretap.wiretap/uninstall!`
+ 
+ ```clojure
+ (uninstall! ([]) ([vars]))
+ ```
 
+Sets the root binding of every applicable var to a be the value before calling
+   `install!`. If called without any arguments then all vars available via
+   `clojure.core/loaded-libs` will be checked. 
+
+> A var is considered applicable if a valid value is present under the metadata key `:wiretap.wiretap/wiretapped` and its metadata does not contain the key `:wiretap.wiretap/exclude`.
+
+   Returns a coll of all modified vars.
+
+ ## `wiretap.tools/ns-matches-vars`
+
+ Given an instance of `java.util.regex.Pattern`, returns a seq of all vars that have been interned in namespaces matched by the regex.
+
+# Examples
+## Writing a tools.trace clone
+
+Assume that we have the following namespace definitions...
 ```clojure
 (ns user)
 
@@ -27,78 +109,48 @@
 
 (defn pass-simple [x] (call-f simple x))
 ```
-## Writing a tools.trace clone
-To show how wiretap events can be used - we will write a simple tracer that mimics some of the functionality found in the  [`tools.trace`](https://github.com/clojure/tools.trace) library. However, unlike `tools.trace`, we will persist the data required to _display_ the trace.
-```clojure
-user=> (require '[clojure.tools.trace :as trace])
-nil
-user=> (trace/trace-ns *ns*)
-nil
-user=> (pass-simple 1)
-TRACE t8778: (user/pass-simple 1)
-TRACE t8779: | (user/call-f #function[clojure.tools.trace/trace-var*/fn--6172/tracing-wrapper--6173] 1)
-TRACE t8780: | | (user/simple 1)
-TRACE t8780: | | => 2
-TRACE t8779: | => 2
-TRACE t8778: => 2
-2
-user=> (trace/untrace-ns *ns*)
-nil
-user=> (pass-simple 1)
-2
-```
-We write a function that can take a wiretap event map and perform some io. The first parameter will just be an atom that we use to map the event ids onto the kind of trace id that we want to print. 
+To show how wiretap events can be used - we will generate traces similar to those of the [`clojure/tools.trace`](https://github.com/clojure/tools.trace) library. All we need to do is write a function that can take a wiretap context map and perform some io (call to `println`).
 ```clojure
 (defn ^:wiretap.wiretap/exclude my-trace
-  [trace-ids {:keys [id called depth name args result] :as wiretap-event}]
-  (let [pre-invocation? (= called :pre)
-        trace-id (if pre-invocation? (gensym "t") (get @trace-ids id))
+  [trace-id-atom {:keys [id pre? depth name ns args result] :as ctx}]
+  (let [trace-id (if pre? (gensym "t") (get @trace-id-atom id))
         trace-indent (apply str (take depth (repeat "| ")))
-        trace-value (if pre-invocation?
-                      (str trace-indent (pr-str (cons name args)))
+        trace-value (if pre?
+                      (str trace-indent (pr-str (cons (symbol (ns-resolve ns name)) args)))
                       (str trace-indent "=> " (pr-str result)))]
-    (if pre-invocation?
-      (swap! trace-ids assoc id trace-id)
-      (swap! trace-ids dissoc id))
+    (if pre?
+      (swap! trace-id-atom assoc id trace-id)
+      (swap! trace-id-atom dissoc id))
     (println (str "TRACE" (str " " trace-id) ": " trace-value))))
 ```
-Now that we have out trace function that can take wiretap events and produce a `tools.trace` style output, we can take it for a spin. For the sake of example, let us **persist** all events and then run print a trace of the persisted events.
+To make things interesting - we will **persist** all of the contexts and then run our trace function on the data. Repeatable traces!
 ```clojure
-user=> (def events (atom []))
-#'user/events
-user=> (wiretap/install! #(swap! events conj %) (tools/ns-vars *ns*))
+user=> (def history (atom []))
+#'user/history
+user=> (wiretap/install! #(swap! history conj %) (tools/ns-vars *ns*))
 (#'user/pass-simple #'user/simple #'user/call-f)
 user=> (pass-simple 1)
 2
-user=> (count @events)
+user=> (count @history)
 6
-user=> (wiretap/uninstall!)
-(#'user/pass-simple #'user/simple #'user/call-f)
-user=> (pass-simple 2)
-3
-user=> (count @events)
-6
-```
-Now that we have some data, let's try to trace it! If we didn't care about persisting the events, then we could just pass the partially applied `my-trace` to `install!` and get _live_ tracing.
-```clojure
-user=> (run! (partial my-trace (atom {})) @events)
-TRACE t9119: (pass-simple 1)
-TRACE t9120: | (call-f #function[clojure.lang.AFunction/1] 1)
-TRACE t9121: | | (simple 1)
-TRACE t9121: | | => 2
-TRACE t9120: | => 2
-TRACE t9119: => 2
+user=> (run! (partial my-trace (atom {})) @history)
+TRACE t8018: (user/pass-simple 1)
+TRACE t8019: | (user/call-f #function[clojure.lang.AFunction/1] 1)
+TRACE t8020: | | (user/simple 1)
+TRACE t8020: | | => 2
+TRACE t8019: | => 2
+TRACE t8018: => 2
 nil
 ```
 
 
-# Sampling data
+## Sampling data
 
 ```clojure
 (defn sampler [var-obj]
   (let [samples (atom {})
-        f (fn [{:keys [called args result error]}]
-            (when (= called :post)
+        f (fn [{:keys [post? args result error]}]
+            (when post?
               (let [[ks value] (if error
                                  [[:errors args] error]
                                  [[:results args] result])]
@@ -133,13 +185,14 @@ user=> (.getMessage (first (get-in @call-f-samples [:errors [inc "2"]])))
 "class java.lang.String cannot be cast to class java.lang.Number (java.lang.String and java.lang.Number are in module java.base of loader 'bootstrap')"
 ```
 
-## Related
+# Related
 
 - https://github.com/clojure/tools.trace
 - https://github.com/circleci/bond
 - https://github.com/alexanderjamesking/spy
+- https://github.com/technomancy/robert-hooke
 
-## Development
+# Development
 
 ```
 clj -X:test

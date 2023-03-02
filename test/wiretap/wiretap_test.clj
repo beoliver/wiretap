@@ -19,8 +19,8 @@
 
 (defn wiretap-events [ks vars]
   (let [state (atom [])
-        f (fn [{:keys [called] :as event}]
-            (when ((set ks) called) (swap! state conj event)))]
+        f (fn [{:keys [pre? post?] :as event}]
+            (when ((set ks) (cond pre? :pre post? :post)) (swap! state conj event)))]
     (wiretap/install! f vars)
     state))
 
@@ -94,10 +94,10 @@
 (test/deftest listener-exceptions-test
   (let [state (atom [])]
     (wiretap/install!
-     (fn [{:keys [called] :as event}]
-       (case called
-         :pre  (swap! state conj event)
-         :post (throw (Exception. "OOPS"))))
+     (fn [{:keys [pre? post?] :as event}]
+       (cond 
+         pre?  (swap! state conj event)
+         post? (throw (Exception. "OOPS"))))
      vars-of-interest)
     (test/is (= 1 (sut/call-simple 1)))
     (test/is (= 2 (count @state)))))

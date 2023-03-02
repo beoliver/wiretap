@@ -19,19 +19,25 @@
   (count @events))
 
 
-(defn ^:wiretap.wiretap/exclude tools-trace-clone
-  [trace-id-atom {:keys [id called depth name args result] :as wiretap-event}]
-  (let [pre-invocation? (= called :pre)
-        trace-id (if pre-invocation? (gensym "t") (get @trace-id-atom id))
+(defn ^:wiretap.wiretap/exclude my-trace
+  [trace-id-atom {:keys [id pre? depth name ns args result] :as ctx}]
+  (let [trace-id (if pre? (gensym "t") (get @trace-id-atom id))
         trace-indent (apply str (take depth (repeat "| ")))
-        trace-value (if pre-invocation?
-                      (str trace-indent (pr-str (cons name args)))
+        trace-value (if pre?
+                      (str trace-indent (pr-str (cons (symbol (ns-resolve ns name)) args)))
                       (str trace-indent "=> " (pr-str result)))]
-    (if pre-invocation?
+    (if pre?
       (swap! trace-id-atom assoc id trace-id)
       (swap! trace-id-atom dissoc id))
     (println (str "TRACE" (str " " trace-id) ": " trace-value))))
 
+(comment
+  (def contexts (atom []))
+  (wiretap/install! #(swap! contexts conj %) (tools/ns-vars *ns*)) 
+  (pass-simple 1)
+  (wiretap/uninstall!)
+  (run! (partial my-trace (atom {})) @contexts)
+  )
 
 (comment
 
@@ -58,27 +64,7 @@
   (pass-simple 1)
   (trace/untrace-ns *ns*))
 
-(comment
-  (wiretap/install!
-   (let [trace-id-lookup (atom {})]
-     (fn tools-trace-clone
-       [{:keys [id called depth name args result]}]
-       (if (= called :pre)
-         (let [trace-id (gensym "t")
-               trace-indent (apply str (take depth (repeat "| ")))
-               trace-value (str trace-indent (pr-str (cons name args)))]
-           (swap! trace-id-lookup assoc id trace-id)
-           (println (str "TRACE" (str " " trace-id) ": " trace-value)))
-         (let [trace-id (get @trace-id-lookup id)
-               trace-indent (apply str (take depth (repeat "| ")))
-               trace-value (str trace-indent "=> " (pr-str result))]
-           (swap! trace-id-lookup dissoc id)
-           (println (str "TRACE" (str " " trace-id) ": " trace-value))))))
-   (tools/ns-vars *ns*))
 
-  (pass-simple 1)
-
-  (wiretap/uninstall!))
 
 
 
