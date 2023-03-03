@@ -197,3 +197,59 @@ user=> (.getMessage (first (get-in @call-f-samples [:errors [inc "2"]])))
 ```
 clj -X:test
 ```
+
+# Test in the REPL
+
+```
+clj -Sdeps '{:deps {wiretap/wiretap {:git/url "https://github.com/beoliver/wiretap/" :git/sha "de8814d6d46eed26f15c3878e59927552eee904c"}}}' -e "(require '[wiretap.wiretap :as wiretap] '[wiretap.tools :as wiretap-tools])" -r
+```
+
+```clojure
+Checking out: https://github.com/beoliver/wiretap/ at de8814d6d46eed26f15c3878e59927552eee904c
+WARNING: Implicit use of clojure.main with options is deprecated, use -M
+user=> (def foo (fn [x] (+ x x)))
+#'user/foo
+user=> (wiretap/install! #(when (:post? %) (clojure.pprint/pprint %)) [#'foo])
+(#'user/foo)
+user=> (foo 10)
+{:args (10),
+ :parent nil,
+ :ns #object[clojure.lang.Namespace 0x309028af "user"],
+ :name foo,
+ :start 298028669941875,
+ :function #object[user$foo 0x44841b43 "user$foo@44841b43"],
+ :stop 298028670197791,
+ :result 20,
+ :thread "main",
+ :post? true,
+ :id "7bd32775-d675-48ab-8d42-c56924ed7ee3",
+ :stack
+ [[java.lang.Thread getStackTrace "Thread.java" 1602],
+  [wiretap.wiretap$wiretap_var_BANG_$wiretapped__149 doInvoke "wiretap.clj" 17],
+  [clojure.lang.RestFn applyTo "RestFn.java" 137],
+  [clojure.lang.AFunction$1 doInvoke "AFunction.java" 31],
+  [clojure.lang.RestFn invoke "RestFn.java" 408],
+  [user$eval223 invokeStatic "NO_SOURCE_FILE" 1],
+  [user$eval223 invoke "NO_SOURCE_FILE" 1],
+  [clojure.lang.Compiler eval "Compiler.java" 7194],
+  [clojure.lang.Compiler eval "Compiler.java" 7149],
+  [clojure.core$eval invokeStatic "core.clj" 3215],
+  [clojure.core$eval invoke "core.clj" 3211],
+  [clojure.main$repl$read_eval_print__9206$fn__9209 invoke "main.clj" 437],
+  [clojure.main$repl$read_eval_print__9206 invoke "main.clj" 437],
+  [clojure.main$repl$fn__9215 invoke "main.clj" 458],
+  [clojure.main$repl invokeStatic "main.clj" 458],
+  [clojure.main$repl_opt invokeStatic "main.clj" 522],
+  [clojure.main$repl_opt invoke "main.clj" 518],
+  [clojure.main$main invokeStatic "main.clj" 664],
+  [clojure.main$main doInvoke "main.clj" 616],
+  [clojure.lang.RestFn applyTo "RestFn.java" 137],
+  [clojure.lang.Var applyTo "Var.java" 705],
+  [clojure.main main "main.java" 40]],
+ :depth 0}
+20
+user=> (wiretap/uninstall!)
+(#'user/foo)
+user=> (foo 20)
+40
+```
