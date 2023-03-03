@@ -88,15 +88,15 @@
 
 (defn ^::exclude uninstall!
   "Sets the root binding of every applicable var to a be the value before calling
-   `install!`. If called without any arguments then all vars available via
-   `clojure.core/loaded-libs` will be checked.
+   `install!`. If called without any arguments then all vars in namespaces available
+   via `clojure.core/all-ns` will be checked.
 
    A var is considered applicable if a valid value is present under the metadata
    key `:wiretap.wiretap/wiretapped` and its metadata does not contain the key
    `:wiretap.wiretap/exclude`.
 
    Returns a coll of all modified vars."
-  ([] (uninstall! (mapcat (comp vals ns-interns) (loaded-libs))))
+  ([] (uninstall! (mapcat (comp vals ns-interns) (all-ns))))
   ([vars] (doall (keep (fn [var-obj]
                          (let [{:keys [::wiretapped ::exclude]} (meta var-obj)]
                            (when (and wiretapped (not exclude))
