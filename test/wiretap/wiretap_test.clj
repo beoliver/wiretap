@@ -75,10 +75,42 @@
       (test/is (= (:parent c) (:id a)))
       (test/is (= (:parent d) (:id a))))))
 
+(test/deftest delay-test
+  (let [state (wiretap-events #{:pre} vars-of-interest)]
+    (test/testing "Realizing a delay DOES NOT preserve the `:parent` id"
+      ;; ie the parent is no longer on the stack...
+      (let [result (sut/run-simple-in-delay 1)]
+        (test/is (not (realized? result)))
+        (test/is (= 1 (count @state)))
+        (test/is (= 'run-simple-in-delay (:name (first @state))))
+        (let [realized @result]
+          (test/is (= 1 realized))
+          (test/is (= 2 (count @state)))
+          (let [[a b] @state]
+            (test/is (= (:thread a) (:thread b)))
+            (test/is (= (:parent a) nil))
+            (test/is (= (:parent b) nil))))))
+    (reset! state [])
+    (test/testing "If the delay was realized inside parent then parent preserved"
+      (let [result (sut/realized-run-simple-in-delay 1)]
+        (test/is (= 1 result))
+        (test/is (= 2 (count @state)))
+        (let [[a b] @state]
+          (test/is (= (:thread a) (:thread b)))
+          (test/is (= (:parent a) nil))
+          (test/is (= (:parent b) (:id a))))))))
+
 (test/deftest binding-conveyance-test
   (let [state (wiretap-events #{:pre} vars-of-interest)]
     (test/testing "Future call preserves the `:parent` id"
-      (test/is (= 1 (sut/run-simple-in-future 1)))
+      (test/is (not (realized? (sut/run-simple-in-future 1))))
+      (let [[a b] @state]
+        (test/is (not= (:thread a) (:thread b)))
+        (test/is (= (:parent a) nil))
+        (test/is (= (:parent b) (:id a)))))
+    (reset! state [])
+    (test/testing "Realized future call preserves the `:parent` id"
+      (test/is (= 1 (sut/run-simple-in-future-realized 1)))
       (let [[a b] @state]
         (test/is (not= (:thread a) (:thread b)))
         (test/is (= (:parent a) nil))
@@ -95,7 +127,7 @@
   (let [state (atom [])]
     (wiretap/install!
      (fn [{:keys [pre? post?] :as event}]
-       (cond 
+       (cond
          pre?  (swap! state conj event)
          post? (throw (Exception. "OOPS"))))
      vars-of-interest)

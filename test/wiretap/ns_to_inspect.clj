@@ -15,7 +15,16 @@
 (defn doall-simple [xs] (doall (map simple xs)))
 
 (defn run-simple-in-future [x]
+  (future (simple x)))
+
+(defn run-simple-in-future-realized [x]
   @(future (simple x)))
+
+(defn run-simple-in-delay [x]
+  (delay (simple x)))
+
+(defn realized-run-simple-in-delay [x]
+  @(delay (simple x)))
 
 (defn run-simple-in-thread [x]
   (.start (new Thread (fn [] (simple x)))))
