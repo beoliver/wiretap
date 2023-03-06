@@ -2,7 +2,8 @@
   (:require
    [wiretap.wiretap :as wiretap]
    [wiretap.tools :as tools]
-   [clojure.tools.trace :as trace]))
+   [clojure.tools.trace :as trace]
+   [spec-provider.provider :as sp]))
 
 (defn simple [x] (inc x))
 
@@ -13,6 +14,9 @@
 (comment
   (def events (atom []))
   (wiretap/install! #(swap! events conj %) (tools/ns-vars *ns*))
+  (call-f simple 1)
+  (call-f simple 2)
+  (call-f simple 3.0)
   (pass-simple 1)
   (wiretap/uninstall!)
   (pass-simple 2)
@@ -33,11 +37,10 @@
 
 (comment
   (def contexts (atom []))
-  (wiretap/install! #(swap! contexts conj %) (tools/ns-vars *ns*)) 
+  (wiretap/install! #(swap! contexts conj %) (tools/ns-vars *ns*))
   (pass-simple 1)
   (wiretap/uninstall!)
-  (run! (partial my-trace (atom {})) @contexts)
-  )
+  (run! (partial my-trace (atom {})) @contexts))
 
 (comment
 
@@ -132,3 +135,20 @@
                 (swap! samples update-in ks (fnil conj #{}) value))))]
     (wiretap/install! f [var-obj])
     samples))
+
+
+(defn result-spec [history var-obj]
+  (let [var-ns (:ns (meta var-obj))
+        var-name (:name (meta var-obj))
+        examples (->> history
+                      (filter (fn [{:keys [post? error ns name]}]
+                                (and post?
+                                     (nil? error)
+                                     (= ns var-ns)
+                                     (= name var-name))))
+                      (map :result))]
+    (sp/pprint-specs
+     (sp/infer-specs (set examples) (keyword (name (ns-name var-ns))
+                                             (name var-name)))
+     var-ns 'spec)))
+

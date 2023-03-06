@@ -61,8 +61,8 @@ to `f`:
 ### Pre invocation
 
 When `f` is called **pre** invocation the following information will also be present.
-| Key     | Value                                                                  |
-| ------- | ---------------------------------------------------------------------- |
+| Key     | Value  |
+| ------- | ------ |
 | `:pre?` | `true` |
 
 ### Post invocation
@@ -71,7 +71,7 @@ When `f` is called **post** invocation the following information will also be pr
 
 | Key       | Value                                                                             |
 | --------- | --------------------------------------------------------------------------------- |
-| `:post?`  | `true`           |
+| `:post?`  | `true`                                                                            |
 | `:stop`   | Nanoseconds since some fixed but arbitrary origin time.                           |
 | `:result` | The result computed by applying the value of `:function` to the value of `:args`. |
 | `:error`  | Any exception caught during computation of the result.                            |
@@ -144,46 +144,36 @@ nil
 ```
 
 
-## Sampling data
+## Inferring specs
+Now that we have a _history_ of events, we can perform other operations on them! In the previous example we called `pass-simple` passing the value `1`. Let's use the [spec-provider](https://github.com/stathissideris/spec-provider) library to _infer_ some specs from the trace.
+```clojure
+(require '[spec-provider.provider :as sp])
 
-```clojure
-(defn sampler [var-obj]
-  (let [samples (atom {})
-        f (fn [{:keys [post? args result error]}]
-            (when post?
-              (let [[ks value] (if error
-                                 [[:errors args] error]
-                                 [[:results args] result])]
-                (swap! samples update-in ks (fnil conj #{}) value))))]
-    (wiretap/install! f [var-obj])
-    samples))
+(defn result-spec [history var-obj]
+  (let [var-ns (:ns (meta var-obj))
+        var-name (:name (meta var-obj))
+        examples (->> history
+                      (filter (fn [{:keys [post? error ns name]}]
+                                (and post?
+                                     (nil? error) ;; ignore results if error thrown
+                                     (= ns var-ns)
+                                     (= name var-name))))
+                      (map :result))]
+    (sp/pprint-specs
+     (sp/infer-specs (set examples) (keyword (name (ns-name var-ns))
+                                             (name var-name)))
+     var-ns 'spec)))
 ```
+We can now use the function to infer the spec of the _return_ value for a function - even if we never called it directly.
 ```clojure
-user=> (def call-f-samples (sampler #'call-f))
-#'user/call-f-samples
-user=> call-f-samples
-#<Atom@18142d69: {}>
-user=> (call-f inc 2)
-3
-user=> (call-f dec 2)
-1
-user=> (call-f + 2)
-2
-user=> (call-f :a {:a 1})
-1
-user=> @call-f-samples
-{:results
- {(#function[clojure.core/inc] 2) #{3},
-  (#function[clojure.core/dec] 2) #{1},
-  (#function[clojure.core/+] 2) #{2},
-  (:a {:a 1}) #{1}}}
-user=> (call-f inc "2")
-; Execution error (ClassCastException) at user/call-f (user.clj:9).
-user=> (wiretap/uninstall! [#'call-f])
-(#'user/call-f)
-user=> (.getMessage (first (get-in @call-f-samples [:errors [inc "2"]])))
-"class java.lang.String cannot be cast to class java.lang.Number (java.lang.String and java.lang.Number are in module java.base of loader 'bootstrap')"
+=> (return-spec @history #'simple)
+(spec/def ::simple integer?)
+=> (call-f simple 2.0)
+3.0
+=> (return-spec @history #'simple)
+(spec/def ::simple (spec/or :double double? :integer integer?))
 ```
+
 
 # Related
 
