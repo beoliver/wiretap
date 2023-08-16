@@ -12,6 +12,8 @@
 
 (defn map-simple [xs] (map simple xs))
 
+(defn mapv-simple [xs] (mapv simple xs))
+
 (defn doall-simple [xs] (doall (map simple xs)))
 
 (defn run-simple-in-future [x]

@@ -13,67 +13,81 @@
                            (wiretap/uninstall! vars-of-interest)))
 
 (test/deftest wiretapped-test
-  (run! #(test/is (not (tools/wiretapped? %))) vars-of-interest)
-  (let [wiretapped-vars (wiretap/install! identity vars-of-interest)]
-    (run! #(test/is (tools/wiretapped? %)) wiretapped-vars)))
+  (test/testing "a wiretap can be installed and uninstalled"
+    (run! #(test/is (not (tools/wiretapped? %))) vars-of-interest)
+    (let [wiretapped-vars (wiretap/install! identity vars-of-interest)]
+      (run! #(test/is (tools/wiretapped? %)) wiretapped-vars)
+      (wiretap/uninstall! vars-of-interest)
+      (run! #(test/is (not (tools/wiretapped? %))) vars-of-interest))))
 
 (defn wiretap-events [ks vars]
   (let [state (atom [])
         f (fn [{:keys [pre? post?] :as event}]
-            (when ((set ks) (cond pre? :pre post? :post)) (swap! state conj event)))]
+            (let [inculude-event? (boolean ((set ks) (cond pre? :pre post? :post)))]
+              (when inculude-event? (swap! state conj event))))]
     (wiretap/install! f vars)
     state))
 
 (test/deftest call-simple-test
   (let [state (wiretap-events #{:pre} vars-of-interest)]
-    (test/is (= 1 (sut/call-simple 1)))
-    (test/is (= 2 (count @state)))
-    (let [[a b] @state]
-      (test/is (= (:parent a) nil))
-      (test/is (= (:parent b) (:id a))))))
+    (test/is (= 1 (sut/call-simple 1)) "expected value")
+    (let [[call-simple-event _] @state]
+      (test/is (= [{:name 'call-simple :parent nil}
+                   {:name 'simple :parent (:id call-simple-event)}]
+                  (mapv #(select-keys % [:name :parent]) @state))))))
 
 (test/deftest pass-simple-test
   (let [state (wiretap-events #{:pre} vars-of-interest)]
-    (test/is (= 1 (sut/pass-simple 1)))
-    (test/is (= 3 (count @state)))
-    (let [[a b c] @state]
-      (test/is (= (:parent a) nil))
-      (test/is (= (:parent b) (:id a)))
-      (test/is (= (:parent c) (:id b))))))
+    (test/is (= 1 (sut/pass-simple 1)) "expected value")
+    (let [[pass-simple-event call-f-event _] @state]
+      (test/is (= [{:name 'pass-simple :parent nil}
+                   {:name 'call-f :parent (:id pass-simple-event)}
+                   {:name 'simple :parent (:id call-f-event)}]
+                  (mapv #(select-keys % [:name :parent]) @state))))))
 
 (test/deftest map-simple-test
   (let [state (wiretap-events #{:pre} vars-of-interest)]
-    (test/is (= [1 2 3] (sut/map-simple [1 2 3])))
-    #_(clojure.pprint/pprint (map (fn [x] (update x :stack #(mapv clojure.repl/demunge
-                                                                  (tools/filter-trace #"wiretap.*" %)))) @state))
-    (test/is (= 4 (count @state)))
-    (let [[a b c d] @state]
-      (test/is (= (:parent a) nil))
-      (test/is (= (:parent b) nil))
-      (test/is (= (:parent c) nil))
-      (test/is (= (:parent d) nil)))))
+    (test/is (= [1 2 3] (sut/map-simple [1 2 3])) "expected value")
+    (test/testing "no event has parent as map is a lazy function"
+      (test/is (= [{:name 'map-simple :parent nil}
+                   {:name 'simple :parent nil}
+                   {:name 'simple :parent nil}
+                   {:name 'simple :parent nil}]
+                  (mapv #(select-keys % [:name :parent]) @state))))))
+
+(test/deftest mapv-simple-test
+  (let [state (wiretap-events #{:pre} vars-of-interest)]
+    (test/is (= [1 2 3] (sut/mapv-simple [1 2 3])) "expected value")
+    (test/testing "simple events have parent as mapv is not lazy"
+      (let [[mapv-simple-event _a _b _c] @state]
+        (test/is (= [{:name 'mapv-simple :parent nil}
+                     {:name 'simple :parent (:id mapv-simple-event)}
+                     {:name 'simple :parent (:id mapv-simple-event)}
+                     {:name 'simple :parent (:id mapv-simple-event)}]
+                    (mapv #(select-keys % [:name :parent]) @state)))))))
 
 (test/deftest doall-simple-test
   (let [state  (wiretap-events #{:pre} vars-of-interest)]
     (test/is (= [1 2 3] (sut/doall-simple [1 2 3])))
-    #_(clojure.pprint/pprint (map (fn [x] (update x :stack #(mapv clojure.repl/demunge
-                                                                  (tools/filter-trace #"wiretap.*" %)))) @state))
-    (test/is (= 4 (count @state)))
-    (let [[a b c d] @state]
-      (test/is (= (:parent a) nil))
-      (test/is (= (:parent b) (:id a)))
-      (test/is (= (:parent c) (:id a)))
-      (test/is (= (:parent d) (:id a))))))
+    (test/testing "simple events have parent as doall realizes the lazy seq"
+      (let [[doall-simple-event & _] @state]
+        (test/is (= [{:name 'doall-simple :parent nil}
+                     {:name 'simple :parent (:id doall-simple-event)}
+                     {:name 'simple :parent (:id doall-simple-event)}
+                     {:name 'simple :parent (:id doall-simple-event)}]
+                    (mapv #(select-keys % [:name :parent]) @state)))))))
 
 (test/deftest run-simple-test
   (let [state  (wiretap-events #{:pre} vars-of-interest)]
     (test/is (= nil (sut/run-simple [1 2 3])))
-    (test/is (= 4 (count @state)))
-    (let [[a b c d] @state]
-      (test/is (= (:parent a) nil))
-      (test/is (= (:parent b) (:id a)))
-      (test/is (= (:parent c) (:id a)))
-      (test/is (= (:parent d) (:id a))))))
+    (test/testing "simple events have parent as run is not lazy"
+      (let [[run-simple-event _a _b _c] @state]
+        (test/is (= 4 (count @state)))
+        (test/is (= [{:name 'run-simple :parent nil}
+                     {:name 'simple :parent (:id run-simple-event)}
+                     {:name 'simple :parent (:id run-simple-event)}
+                     {:name 'simple :parent (:id run-simple-event)}]
+                    (mapv #(select-keys % [:name :parent]) @state)))))))
 
 (test/deftest delay-test
   (let [state (wiretap-events #{:pre} vars-of-interest)]
@@ -81,33 +95,32 @@
       ;; ie the parent is no longer on the stack...
       (let [result (sut/run-simple-in-delay 1)]
         (test/is (not (realized? result)))
-        (test/is (= 1 (count @state)))
-        (test/is (= 'run-simple-in-delay (:name (first @state))))
-        (let [realized @result]
-          (test/is (= 1 realized))
-          (test/is (= 2 (count @state)))
-          (let [[a b] @state]
-            (test/is (= (:thread a) (:thread b)))
-            (test/is (= (:parent a) nil))
-            (test/is (= (:parent b) nil))))))
+        (test/is (= [{:name 'run-simple-in-delay :parent nil}]
+                    (mapv #(select-keys % [:name :parent]) @state)))
+        (test/is (= 1 @result))
+        (test/is (= [{:name 'run-simple-in-delay :parent nil}
+                     {:name 'simple :parent nil}]
+                    (mapv #(select-keys % [:name :parent]) @state)))))
     (reset! state [])
     (test/testing "If the delay was realized inside parent then parent preserved"
       (let [result (sut/realized-run-simple-in-delay 1)]
         (test/is (= 1 result))
-        (test/is (= 2 (count @state)))
-        (let [[a b] @state]
-          (test/is (= (:thread a) (:thread b)))
-          (test/is (= (:parent a) nil))
-          (test/is (= (:parent b) (:id a))))))))
+        (let [[realized-run-simple-in-delay-event & _simple-events] @state]
+          (test/is (= [{:name 'realized-run-simple-in-delay :parent nil}
+                       {:name 'simple :parent (:id realized-run-simple-in-delay-event)}]
+                      (mapv #(select-keys % [:name :parent]) @state))))))))
 
 (test/deftest binding-conveyance-test
   (let [state (wiretap-events #{:pre} vars-of-interest)]
-    (test/testing "Future call preserves the `:parent` id"
-      (test/is (not (realized? (sut/run-simple-in-future 1))))
-      (let [[a b] @state]
-        (test/is (not= (:thread a) (:thread b)))
-        (test/is (= (:parent a) nil))
-        (test/is (= (:parent b) (:id a)))))
+    (test/testing "TODO: does a Future call preserve the `:parent` id if it not realized?"
+      (let [result (sut/run-simple-in-future 1)]
+        (test/is (future? result))
+        (let [derefed @result
+              [a b] @state]
+          (test/is (= 1 derefed))
+          (test/is (not= (:thread a) (:thread b)))
+          (test/is (= (:parent a) nil))
+          (test/is (= (:parent b) (:id a))))))
     (reset! state [])
     (test/testing "Realized future call preserves the `:parent` id"
       (test/is (= 1 (sut/run-simple-in-future-realized 1)))
@@ -116,7 +129,8 @@
         (test/is (= (:parent a) nil))
         (test/is (= (:parent b) (:id a)))))
     (reset! state [])
-    (test/testing "Thread call DOES NOT preserve the `:parent` id"
+    (test/testing "Thread call DOES NOT preserve the `:parent` id."
+      ;; this test might fail or break other tests when run on a machine with a single CPU.
       (test/is (= nil (sut/run-simple-in-thread 1)))
       (let [[a b] @state]
         (test/is (not= (:thread a) (:thread b)))
@@ -137,5 +151,3 @@
 
 (comment
   (run! (partial ns-unmap *ns*) (keys (ns-interns *ns*))))
-
-

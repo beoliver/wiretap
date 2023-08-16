@@ -73,9 +73,9 @@
    | `:pre?` | `true` |
 
    ### Post invocation
-   
+
    When `f` is called **post** invocation the following information will also be present.
-   
+
    | Key       | Value                                                                             |
    | --------- | --------------------------------------------------------------------------------- |
    | `:post?`  | `true`                                                                            |
