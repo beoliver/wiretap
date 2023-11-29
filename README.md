@@ -1,4 +1,5 @@
 # wiretap
+
 #### A Clojure library for adding generic trace support without having to modify code.
 
 </br>
@@ -18,6 +19,17 @@
  Given a [var](https://clojure.org/reference/vars) whose value implements Fn, i.e was created by fn - wiretap lets you `install!` a side effecting function `f` that will be called both **pre** and **post** invocation of the var's original value.
  
 This pattern captures the _essence_ of a trace. By allowing a custom function `f`, wiretap can be used for multiple different purposes.
+
+## Releases
+
+As a git dep:
+```clojure
+io.github.beoliver/wiretap {:git/sha "45130c7"}
+```
+As a Maven dep:
+```clojure
+io.github.beoliver/wiretap {:mvn/version "0.0.7"}
+```
 
  # API
 
