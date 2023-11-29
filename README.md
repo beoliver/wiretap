@@ -1,4 +1,5 @@
 # wiretap
+[![Clojars Project](https://img.shields.io/clojars/v/io.github.beoliver/wiretap.svg)](https://clojars.org/io.github.beoliver/wiretap)
 
 #### A Clojure library for adding generic trace support without having to modify code.
 
