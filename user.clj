@@ -151,4 +151,3 @@
      (sp/infer-specs (set examples) (keyword (name (ns-name var-ns))
                                              (name var-name)))
      var-ns 'spec)))
-
