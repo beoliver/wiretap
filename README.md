@@ -25,11 +25,11 @@ This pattern captures the _essence_ of a trace. By allowing a custom function `f
 
 As a git dep:
 ```clojure
-io.github.beoliver/wiretap {:git/sha "45130c7"}
+io.github.beoliver/wiretap {:git/sha "074eed9"}
 ```
 As a Maven dep:
 ```clojure
-io.github.beoliver/wiretap {:mvn/version "0.0.7"}
+io.github.beoliver/wiretap {:mvn/version "0.0.10"}
 ```
 
  # API
