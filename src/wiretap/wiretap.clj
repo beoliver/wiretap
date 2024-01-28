@@ -2,35 +2,84 @@
 
 (def ^:private ^:dynamic *context* nil)
 
+(defn- ^::exclude uninstall-wiretap! [var-obj]
+  (let [{:keys [::uninstall ::exclude]} (meta var-obj)]
+    (when (and uninstall (not exclude))
+      (doto var-obj
+        (alter-var-root uninstall)
+        (alter-meta! #(dissoc % ::uninstall))))))
+
+
+(defn ^::exclude uninstall!
+  "Uninstalls all wiretaps from all applicable vars in vars.
+
+   A var is considered applicable if the key `:wiretap.wiretap/uninstall` 
+   is present in the metadata and the key `:wiretap.wiretap/exclude` is not.
+
+   Returns a coll of all modified vars."
+  ([] (uninstall! (mapcat (comp vals ns-interns) (all-ns))))
+  ([vars] (doall (keep uninstall-wiretap! vars))))
+
+
+(defn- ^::exclude wrap-wiretapped
+  [var-meta additional-context existing-f supplied-f]
+  (fn wiretapped [& args]
+    (let [context (merge
+                   additional-context
+                   {:ns (:ns var-meta)
+                    :name (:name var-meta)
+                    :function existing-f
+                    :args args
+                    :depth ((fnil inc -1) (:depth wiretap.wiretap/*context*))
+                    :id (str (random-uuid))
+                    :thread (.getName (Thread/currentThread))
+                    :stack (.getStackTrace (Thread/currentThread))
+                    :start (. System (nanoTime))
+                    :parent (:id wiretap.wiretap/*context*)})]
+      (try (supplied-f (assoc context :pre? true)) (catch Exception _))
+      (let [{:keys [error result] :as response}
+            (try {:result (binding [wiretap.wiretap/*context* context]
+                            (apply existing-f args))}
+                 (catch Exception e {:error e}))]
+        (try (supplied-f (assoc (merge context response)
+                                :post? true
+                                :stop (. System (nanoTime))))
+             (catch Exception _))
+        (if error (throw error) result)))))
+
 (defn- ^::exclude wiretap-var! [f var-obj]
-  (let [var-meta (meta var-obj)
-        value (or (::wiretapped var-meta) (var-get var-obj))]
-    (when (and (fn? value) (not (::exclude var-meta)))
-      (letfn [(wiretapped [& args]
-                (let [context {:ns (:ns var-meta)
-                               :name (:name var-meta)
-                               :function value
-                               :args args
-                               :depth ((fnil inc -1) (:depth wiretap.wiretap/*context*))
-                               :id (str (random-uuid))
-                               :thread (.getName (Thread/currentThread))
-                               :stack (.getStackTrace (Thread/currentThread))
-                               :start (. System (nanoTime))
-                               :parent (:id wiretap.wiretap/*context*)}]
-                  (try (f (assoc context :pre? true)) (catch Exception _))
-                  (let [{:keys [error result] :as response}
-                        (try {:result (binding [wiretap.wiretap/*context* context]
-                                        (apply value args))}
-                             (catch Exception e {:error e}))]
-                    (try (f (assoc (merge context response)
-                                   :post? true
-                                   :stop (. System (nanoTime))))
-                         (catch Exception _))
-                    (if error (throw error) result))))]
-        (doto var-obj
-          (alter-var-root (constantly (with-meta wiretapped {::exclude true})))
-          (alter-meta! #(assoc % ::wiretapped value))))
-      var-obj)))
+  (let [var-meta (meta var-obj)]
+    (when-not (::exclude var-meta)
+      (uninstall-wiretap! var-obj)
+      (let [var-value (var-get var-obj)]
+        (when-some [uninstall-fn
+                    (cond
+                      (instance? clojure.lang.Fn var-value)
+                      (let [new-value (wrap-wiretapped var-meta {} var-value f)]
+                        (alter-var-root var-obj (constantly new-value))
+                              ;; uninstall function is the constant original value
+                        (constantly var-value))
+
+                      (instance? clojure.lang.MultiFn var-value)
+                      (let [method-table (methods var-value)]
+                        (doseq [[dispatch-val user-method] method-table]
+                          (let [context {:multimethod? true :dispatch-val dispatch-val}]
+                            (remove-method var-value dispatch-val)
+                            (.addMethod var-value dispatch-val
+                                        (wrap-wiretapped var-meta context user-method f))))
+                              ;; to uninstall we remove all of the methods that we added 
+                              ;; and replace with the original methods. This means that if a user
+                              ;; added a method after we wiretapped it will not be removed - which is
+                              ;; probably what we want.
+                        (fn [var-value]
+                          (doseq [[dispatch-val user-method] method-table]
+                            (remove-method var-value dispatch-val)
+                            (.addMethod var-value dispatch-val user-method))
+                          var-value))
+                      :else nil)]
+          (alter-meta! var-obj #(assoc % ::uninstall uninstall-fn))
+          var-obj)))))
+
 
 (defn ^::exclude install!
   "For every applicable var in vars - removes any existing wiretap and alters
@@ -65,6 +114,15 @@
    | `:start`    | Nanoseconds since some fixed but arbitrary origin time.          |
    | `:parent`   | The context of the previous wiretapped function on the stack.    |
 
+   ### Multimethods 
+
+   If the wiretapped var is a multimethod then the following information will also be present.   
+
+   | Key              | Value                                         | 
+   | ---------------- | --------------------------------------------- |
+   | `:multimethod?`  | `true`                                        |
+   | `:dispatch-val`  | The dispatch value used to select the method. |
+
    ### Pre invocation
 
    When `f` is called **pre** invocation the following information will also be present.
@@ -86,20 +144,17 @@
   [f vars]
   (doall (keep (partial wiretap-var! f) vars)))
 
-(defn ^::exclude uninstall!
-  "Sets the root binding of every applicable var to a be the value before calling
-   `install!`. If called without any arguments then all vars in namespaces available
-   via `clojure.core/all-ns` will be checked.
-
-   A var is considered applicable if a valid value is present under the metadata
-   key `:wiretap.wiretap/wiretapped` and its metadata does not contain the key
-   `:wiretap.wiretap/exclude`.
-
-   Returns a coll of all modified vars."
-  ([] (uninstall! (mapcat (comp vals ns-interns) (all-ns))))
-  ([vars] (doall (keep (fn [var-obj]
-                         (let [{:keys [::wiretapped ::exclude]} (meta var-obj)]
-                           (when (and wiretapped (not exclude))
-                             (doto var-obj
-                               (alter-var-root (constantly wiretapped))
-                               (alter-meta! #(dissoc % ::wiretapped)))))) vars))))
+;; (defn- ^::exclude wiretap-multifn-dispatch! [f var-obj]
+;;   (let [var-meta (meta var-obj)
+;;         value (var-get var-obj)]
+;;     (assert (instance? clojure.lang.MultiFn value) "Only MultiFn's can be wiretapped here")
+;;     (let [dispatch-fn (.-dispatchFn value)
+;;           field (.getDeclaredField clojure.lang.MultiFn "dispatchFn")]
+;;       (.setAccessible field true)
+;;       (.set field value (fn [& args]
+;;                           (let [dispatch-val (apply dispatch-fn args)]
+;;                             (f {:dispatch-val dispatch-val
+;;                                 :args args
+;;                                 :meta (meta var-obj)})
+;;                             dispatch-val)))
+;;       (.setAccessible field false))))

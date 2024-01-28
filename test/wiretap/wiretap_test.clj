@@ -148,6 +148,24 @@
     (test/is (= 1 (sut/call-simple 1)))
     (test/is (= 2 (count @state)))))
 
+(test/deftest multimethod-test
+  (let [state (atom [])]
+    (wiretap/install! #(swap! state conj %) [#'sut/my-multi])
+    (test/is (= {:the-cat "felix"}
+                (sut/my-multi {:animal :cat :name "felix"})))
+    (test/is (= 2 (count @state)))
+    (test/is (every?
+              #(= {:name 'my-multi :multimethod? true :dispatch-val :cat}
+                  (select-keys % [:name :multimethod? :dispatch-val]))
+              @state))
+    (reset! state [])
+    (test/is (= {:the-dog "rover"}
+                (sut/my-multi {:animal :dog :name "rover"})))
+    (test/is (= 2 (count @state)))
+    (test/is (every?
+              #(= {:name 'my-multi :multimethod? true :dispatch-val :dog}
+                  (select-keys % [:name :multimethod? :dispatch-val]))
+              @state))))
 
 (comment
   (run! (partial ns-unmap *ns*) (keys (ns-interns *ns*))))

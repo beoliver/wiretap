@@ -10,15 +10,15 @@
 > **wiretap** | ˈwʌɪətap |
 >
 > [**noun**]
-> 
+>
 >  A concealed device connected to a telephone or other communications system that allows a third party to listen or record conversations.
-> 
+>
 > [**verb**]
-> 
+>
 > To install or to use such a device.
 
- Given a [var](https://clojure.org/reference/vars) whose value implements Fn, i.e was created by fn - wiretap lets you `install!` a side effecting function `f` that will be called both **pre** and **post** invocation of the var's original value.
- 
+ Given a [var](https://clojure.org/reference/vars) whose value is an instance of Fn or MultiFn, i.e was created by `fn` or `defmulti` - wiretap lets you `install!` a side effecting function `f` that will be called both **pre** and **post** invocation of the var's original value.
+
 This pattern captures the _essence_ of a trace. By allowing a custom function `f`, wiretap can be used for multiple different purposes.
 
 ## Releases
@@ -40,22 +40,22 @@ io.github.beoliver/wiretap {:mvn/version "0.0.7"}
  ```
 
 For every applicable var in vars - removes any existing wiretap and alters
-the root binding to be a variadic function closing over the value `g` of the 
+the root binding to be a variadic function closing over the value `g` of the
 var and the user provided function `f`.
 
-> A var is considered applicable if its metadata does not contain the 
-> key `:wiretap.wiretap/exclude` and its value implements Fn, i.e. is an 
-> object created via `fn`.
+> A var is considered applicable if its metadata does not contain the
+> key `:wiretap.wiretap/exclude` and its value implements Fn or MultiFn, i.e. is an
+> object created via `fn` or `defmulti`.
 
-When the resulting "wiretapped" function is called, a map representing the 
-**context** of the call is first passed to `f` before the result is computed 
-by applying `g` to to any args provided. `f` is then called with an updated 
-context before the result is returned. In both cases, `f` is executed within 
+When the resulting "wiretapped" function is called, a map representing the
+**context** of the call is first passed to `f` before the result is computed
+by applying `g` to to any args provided. `f` is then called with an updated
+context before the result is returned. In both cases, `f` is executed within
 a `try/catch` on the same thread. The result of calling `f` is discarded.
 
 Returns a coll of all modified vars.
 
-The following contextual data is will **always** be present in the map passed 
+The following contextual data is will **always** be present in the map passed
 to `f`:
 
 | Key         | Value                                                            |
@@ -70,6 +70,16 @@ to `f`:
 | `:args`     | The seq of args that value of `:function` will be applied to.    |
 | `:start`    | Nanoseconds since some fixed but arbitrary origin time.          |
 | `:parent`   | The context of the previous wiretapped function on the stack.    |
+
+### Multimethods
+
+If the wiretapped var is a multimethod then the following information will also be present.
+
+| Key              | Value                                         |
+| ---------------- | --------------------------------------------- |
+| `:multimethod?`  | `true`                                        |
+| `:dispatch-val`  | The dispatch value used to select the method. |
+
 
 ### Pre invocation
 
@@ -92,7 +102,7 @@ When `f` is called **post** invocation the following information will also be pr
 
 
  ## `wiretap.wiretap/uninstall!`
- 
+
  ```clojure
  (uninstall! ([]) ([vars]))
  ```
@@ -101,7 +111,7 @@ Sets the root binding of every applicable var to a be the value before calling
    `install!`. If called without any arguments then all vars in namespaces available
    via `clojure.core/all-ns` will be checked.
 
-> A var is considered applicable if a valid value is present under the metadata key `:wiretap.wiretap/wiretapped` and its metadata does not contain the key `:wiretap.wiretap/exclude`.
+> A var is considered applicable if has been wiretapped and its metadata does not contain the key `:wiretap.wiretap/exclude`.
 
    Returns a coll of all modified vars.
 
@@ -110,6 +120,59 @@ Sets the root binding of every applicable var to a be the value before calling
  Given an instance of `java.util.regex.Pattern`, returns a seq of all vars that have been interned in namespaces matched by the regex.
 
 # Examples
+
+
+## Multimethods
+
+Assume that we have a multimethod
+
+```clojure
+(defmulti m1 :name)
+
+(defmethod m1 :foo [x] {:the-foo x})
+(defmethod m1 :bar [x] {:the-bar x})
+```
+
+We can wiretap this as follows
+
+```clojure
+user=> (wiretap/install!
+        #(when (:pre? %)
+          (println (select-keys % [:name :dispatch-val :args]))) [#'m1])
+(#'user/m1)
+user=> (m1 {:name :foo})
+{:name m1, :dispatch-val :foo, :args ({:name :foo})} ;; printed line
+{:the-foo {:name :foo}}
+user=> (m1 {:name :bar})
+{:name m1, :dispatch-val :bar, :args ({:name :bar})}  ;; printed line
+{:the-bar {:name :bar}}
+```
+However, if we add a new method then it will **not** be wiretapped.
+```clojure
+user=> (defmethod m1 :baz [x] {:the-baz x})
+#multifn[m1 0x2f3911be]
+user=> (m1 {:name :baz})
+{:the-baz {:name :baz}}
+```
+The methods that were wiretapped, remain wiretapped.
+```clojure
+user=> (m1 {:name :foo})
+{:name m1, :dispatch-val :foo, :args ({:name :foo})} ;; printed line
+{:the-foo {:name :foo}}
+```
+When uninstalling, the wiretapped methods are replaced with the original ones.
+```clojure
+user=> (wiretap/uninstall! [#'m1])
+(#'user/m1)
+user=> (m1 {:name :foo})
+{:the-foo {:name :foo}}
+user=> (m1 {:name :bar})
+{:the-bar {:name :bar}}
+user=> (m1 {:name :baz})
+{:the-baz {:name :baz}}
+```
+
+
 ## Writing a tools.trace clone
 
 Assume that we have the following namespace definitions...
