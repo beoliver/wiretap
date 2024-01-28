@@ -48,7 +48,7 @@
         (if error (throw error) result)))))
 
 (defn- ^::exclude wiretap-var! [f var-obj]
-  (let [var-meta (meta var-obj)] 
+  (let [var-meta (meta var-obj)]
     (when-not (::exclude var-meta)
       (uninstall-wiretap! var-obj)
       (let [var-value (var-get var-obj)]
@@ -144,19 +144,17 @@
   [f vars]
   (doall (keep (partial wiretap-var! f) vars)))
 
-
-(comment 
-  (defn- ^::exclude wiretap-multifn-dispatch! [f var-obj]
-   (let [var-meta (meta var-obj)
-         value (or (::wiretapped var-meta) (var-get var-obj))]
-     (assert (instance? clojure.lang.MultiFn value) "Only MultiFn's can be wiretapped here")
-     (let [dispatch-fn (.-dispatchFn value)
-           field (.getDeclaredField clojure.lang.MultiFn "dispatchFn")]
-       (.setAccessible field true)
-       (.set field value (fn [& args]
-                           (let [dispatch-val (apply dispatch-fn args)]
-                             (f {:dispatch-val dispatch-val
-                                 :args args
-                                 :meta (meta var-obj)})
-                             dispatch-val)))
-       (.setAccessible field false)))))
+;; (defn- ^::exclude wiretap-multifn-dispatch! [f var-obj]
+;;   (let [var-meta (meta var-obj)
+;;         value (var-get var-obj)]
+;;     (assert (instance? clojure.lang.MultiFn value) "Only MultiFn's can be wiretapped here")
+;;     (let [dispatch-fn (.-dispatchFn value)
+;;           field (.getDeclaredField clojure.lang.MultiFn "dispatchFn")]
+;;       (.setAccessible field true)
+;;       (.set field value (fn [& args]
+;;                           (let [dispatch-val (apply dispatch-fn args)]
+;;                             (f {:dispatch-val dispatch-val
+;;                                 :args args
+;;                                 :meta (meta var-obj)})
+;;                             dispatch-val)))
+;;       (.setAccessible field false))))

@@ -30,3 +30,12 @@
 
 (defn run-simple-in-thread [x]
   (.start (new Thread (fn [] (simple x)))))
+
+(defmulti my-multi (fn [{:keys [animal]}] animal))
+
+(defmethod my-multi :cat [{:keys [name]}]
+  {:the-cat name})
+
+(defmethod my-multi :dog [{:keys [name]}]
+  {:the-dog name})
+

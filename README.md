@@ -17,7 +17,7 @@
 >
 > To install or to use such a device.
 
- Given a [var](https://clojure.org/reference/vars) whose value is an instance of `clojure.lang.Fn` or `clojure.lang.MultiFn`, i.e was created by `fn` or `defmulti` - wiretap lets you `install!` a side effecting function `f` that will be called both **pre** and **post** invocation of the var's original value.
+ Given a [var](https://clojure.org/reference/vars) whose value is an instance of Fn or MultiFn, i.e was created by `fn` or `defmulti` - wiretap lets you `install!` a side effecting function `f` that will be called both **pre** and **post** invocation of the var's original value.
 
 This pattern captures the _essence_ of a trace. By allowing a custom function `f`, wiretap can be used for multiple different purposes.
 
@@ -160,7 +160,7 @@ user=> (m1 {:name :foo})
 {:name m1, :dispatch-val :foo, :args ({:name :foo})} ;; printed line
 {:the-foo {:name :foo}}
 ```
-When uninstalling, the wiretapped methods replaced with the original methods.
+When uninstalling, the wiretapped methods are replaced with the original ones.
 ```clojure
 user=> (wiretap/uninstall! [#'m1])
 (#'user/m1)

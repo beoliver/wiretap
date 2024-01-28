@@ -18,7 +18,7 @@
   (apply ns-vars (ns-matches regex)))
 
 (defn wiretapped? [var-obj] 
-  (boolean (:wiretap.wiretap/wiretapped (meta var-obj))))
+  (boolean (:wiretap.wiretap/uninstall (meta var-obj))))
 
 (defn filter-trace [pattern trace]
   (->> (map #(.getClassName %) trace)
