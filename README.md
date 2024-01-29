@@ -36,7 +36,30 @@ As a Maven dep:
 io.github.beoliver/wiretap {:mvn/version "0.0.10"}
 ```
 
+# A Simple Example
+
+```clojure
+(defn foo [x] (inc x))
+(defn bar [x] (foo (dec x)))
+```
+
+```clojure
+user=> (require '[wiretap.wiretap :as wiretap])
+nil
+user=> (wiretap/install! #(println (if (:pre? %) ">" "<") (:name %)) [#'foo #'bar])
+(#'user/foo #'user/bar)
+user=> (+ 10 (bar 1))
+> bar
+> foo
+< foo
+< bar
+11
+```
+
+
 # Supported Types
+
+Depending on the type of the var value, different strategies are used to wrap the invocation of the var. The following table shows the supported types and the corresponding wrapping strategy.
 
 | Instance | wiretap |
 | -------- | ---------- |
