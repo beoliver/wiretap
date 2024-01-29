@@ -21,20 +21,11 @@ This library provides a small set of tools that allow you to _observe_ the execu
 
 Any [var](https://clojure.org/reference/vars) whose value is an instance of Fn or MultiFn (i.e was created via [`fn`](https://clojure.github.io/clojure/clojure.core-api.html#clojure.core/fn) or [`defmulti`](https://clojure.github.io/clojure/clojure.core-api.html#clojure.core/defmulti)) can be wiretapped. 
 
+As a user of the library, you can define a function that will be called before and/or after a wiretapped function or method is invoked. This function can be used to perform any side effecting operations - for example swapping values in an atom, or simply calling `println`. This custom function is passed a context map that contains information about the invocation of the var - the values vary depending on whether the function is called before or after the invocation. For more information see [wiretap context](#wiretap-context).
 
-When a wiretapped var is invoked, a context map is passed to a user defined function before the underlying function is called. Once the underlying function has returned, the context map is passed to the user defined function again. The context map contains information about the invocation of the var, including the arguments, the return value and any errors that may have occurred.
+This pre/post pattern captures the essence of a trace, However wiretap can be used for multiple different purposes.
 
-The user supplied function can perform any side effecting operations. 
-
-This pattern captures the _essence_ of a trace. By allowing a custom function `f`, wiretap can be used for multiple different purposes.
-
-| value | wiretap called | 
-| -------- | ---------- |
-| `Fn`     | Both **pre** and **post** invocation of the function |
-| `MultiFn` | Both **pre** and **post** invocation of the selected function (method) determined by the dispatch-value |
-
-
-## Releases
+# Releases
 
 As a git dep:
 ```clojure
@@ -45,7 +36,14 @@ As a Maven dep:
 io.github.beoliver/wiretap {:mvn/version "0.0.10"}
 ```
 
- # API
+# Supported Types
+
+| value | wiretap called |
+| -------- | ---------- |
+| `Fn`     | Both **pre** and **post** invocation of the function |
+| `MultiFn` | Both **pre** and **post** invocation of the selected function (method) determined by the dispatch-value |
+
+# API
 
 Documentation hosted [here](https://beoliver.github.io/wiretap/index.html)
 
