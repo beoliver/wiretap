@@ -1,4 +1,5 @@
-(ns wiretap.wiretap)
+(ns wiretap.wiretap
+  "Main entry point for the wiretap library.")
 
 (def ^:private ^:dynamic *context* nil)
 
@@ -17,6 +18,7 @@
    is present in the metadata and the key `:wiretap.wiretap/exclude` is not.
 
    Returns a coll of all modified vars."
+  {:doc/format :markdown}
   ([] (uninstall! (mapcat (comp vals ns-interns) (all-ns))))
   ([vars] (doall (keep uninstall-wiretap! vars))))
 
@@ -101,47 +103,32 @@
    The following contextual data is will **always** be present in the map passed
    to `f`:
 
-   | Key         | Value                                                            |
-   | ----------- | ---------------------------------------------------------------- |
-   | `:id`       | Uniquely identifies the call. Same value for pre and post calls. |
-   | `:name`     | A symbol. Taken from the _meta_ of the var.                      |
-   | `:ns`       | A namespace. Taken from the _meta_ of the var.                   |
-   | `:function` | The value that will be applied to the value of `:args`.          |
-   | `:thread`   | The name of the thread.                                          |
-   | `:stack`    | The current stacktrace.                                          |
-   | `:depth`    | Number of _wiretapped_ function calls on the stack.              |
-   | `:args`     | The seq of args that value of `:function` will be applied to.    |
-   | `:start`    | Nanoseconds since some fixed but arbitrary origin time.          |
-   | `:parent`   | The context of the previous wiretapped function on the stack.    |
-
-   ### Multimethods 
-
+   | Key         | When     | Value                                                            |
+   | ----------- | -------- | ---------------------------------------------------------------- |
+   | `:id`       | pre/post | Uniquely identifies the call. Same value for pre and post calls. |
+   | `:name`     | pre/post | A symbol. Taken from the _meta_ of the var.                      |
+   | `:ns`       | pre/post | A namespace. Taken from the _meta_ of the var.                   |
+   | `:function` | pre/post | The value that will be applied to the value of `:args`.          |
+   | `:thread`   | pre/post | The name of the thread.                                          |
+   | `:stack`    | pre/post | The current stacktrace.                                          |
+   | `:depth`    | pre/post | Number of _wiretapped_ function calls on the stack.              |
+   | `:args`     | pre/post | The seq of args that value of `:function` will be applied to.    |
+   | `:start`    | pre/post | Nanoseconds since some fixed but arbitrary origin time.          |
+   | `:parent`   | pre/post | The context of the previous wiretapped function on the stack.    |
+   | `:pre?`     | pre      | `true`                                                           |
+   | `:post?`    | post     | `true`                                                           |
+   | `:stop`     | post     | Nanoseconds since some fixed but arbitrary origin time.          |
+   | `:result`   | post     | The result of applying the value of `:function` to `:args`.      |
+   | `:error`    | post     | Any exception caught during computation of the result.           |
+   
    If the wiretapped var is a multimethod then the following information will also be present.
 
-   | Key              | Value                                                       |
-   | ---------------- | ----------------------------------------------------------- |
-   | `:multimethod?`  | `true`                                                      |
-   | `:dispatch-val`  | The dispatch value used to select the method.               |
-
-   ### Pre invocation
-
-   When `f` is called **pre** invocation the following information will also be present.
-
-   | Key         | Value                                                            |
-   | ----------- | ---------------------------------------------------------------- |
-   | `:pre?`     | `true`                                                           |
-
-   ### Post invocation
-
-   When `f` is called **post** invocation the following information will also be present.
-
-   | Key       | Value                                                              |
-   | --------- | ------------------------------------------------------------------ |
-   | `:post?`  | `true`                                                             |
-   | `:stop`   | Nanoseconds since some fixed but arbitrary origin time.            |
-   | `:result` | The result of applying the value of `:function` to `:args`.        |
-   | `:error`  | Any exception caught during computation of the result.             |
+   | Key              | When     | Value                                                       |
+   | ---------------- | ---------| ----------------------------------------------------------- |
+   | `:multimethod?`  | pre/post | `true`                                                      |
+   | `:dispatch-val`  | pre/post | The dispatch value used to select the method.               |
    "
+  {:doc/format :markdown}
   [f vars]
   (doall (keep (partial wiretap-var! f) vars)))
 
@@ -165,8 +152,6 @@
    | `:parent`   | The context of the previous wiretapped function on the stack.    |
    | `:pre?`     | `true`                                                           |
 
-   ### Multimethods
-
    If the wiretapped var is a multimethod then the following information will also be present.
 
    | Key              | Value                                                       |
@@ -174,6 +159,7 @@
    | `:multimethod?`  | `true`                                                      |
    | `:dispatch-val`  | The dispatch value used to select the method.               |
    "
+  {:doc/format :markdown}
   [f vars]
   (install! #(when (:pre? %) (f %)) vars))
 
@@ -200,8 +186,6 @@
    | `:result`   | The result of applying the value of `:function` to `:args`.      |
    | `:error`    | Any exception caught during computation of the result.           |
 
-   ### Multimethods
-
    If the wiretapped var is a multimethod then the following information will also be present.
 
    | Key              | Value                                                       |
@@ -209,6 +193,7 @@
    | `:multimethod?`  | `true`                                                      |
    | `:dispatch-val`  | The dispatch value used to select the method.               |
    "
+  {:doc/format :markdown}
   [f vars]
   (install! #(when (:post? %) (f %)) vars))
 
