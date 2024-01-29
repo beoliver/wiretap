@@ -39,6 +39,7 @@ io.github.beoliver/wiretap {:mvn/version "0.0.10"}
 # A Simple Example
 
 ```clojure
+(ns user)
 (defn foo [x] (inc x))
 (defn bar [x] (foo (dec x)))
 ```
