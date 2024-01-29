@@ -17,9 +17,22 @@
 >
 > To install or to use such a device.
 
- Given a [var](https://clojure.org/reference/vars) whose value is an instance of Fn or MultiFn, i.e was created by `fn` or `defmulti` - wiretap lets you `install!` a side effecting function `f` that will be called both **pre** and **post** invocation of the var's original value.
+This library provides a small set of tools that allow you to _observe_ the execution of functions and multimethods. It is designed to be used in development environments where you want to gain insights without having to modify code.
+
+Any [var](https://clojure.org/reference/vars) whose value is an instance of Fn or MultiFn (i.e was created via [`fn`](https://clojure.github.io/clojure/clojure.core-api.html#clojure.core/fn) or [`defmulti`](https://clojure.github.io/clojure/clojure.core-api.html#clojure.core/defmulti)) can be wiretapped. 
+
+
+When a wiretapped var is invoked, a context map is passed to a user defined function before the underlying function is called. Once the underlying function has returned, the context map is passed to the user defined function again. The context map contains information about the invocation of the var, including the arguments, the return value and any errors that may have occurred.
+
+The user supplied function can perform any side effecting operations. 
 
 This pattern captures the _essence_ of a trace. By allowing a custom function `f`, wiretap can be used for multiple different purposes.
+
+| value | wiretap called | 
+| -------- | ---------- |
+| `Fn`     | Both **pre** and **post** invocation of the function |
+| `MultiFn` | Both **pre** and **post** invocation of the selected function (method) determined by the dispatch-value |
+
 
 ## Releases
 
