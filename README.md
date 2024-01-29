@@ -17,11 +17,15 @@
 >
 > To install or to use such a device.
 
- Given a [var](https://clojure.org/reference/vars) whose value is an instance of Fn or MultiFn, i.e was created by `fn` or `defmulti` - wiretap lets you `install!` a side effecting function `f` that will be called both **pre** and **post** invocation of the var's original value.
+This library provides a small set of tools that help you to observe the execution of functions and multimethods. It is designed to be used in (dev) environments where you want to gain insights without having to modify/annotate code.
 
-This pattern captures the _essence_ of a trace. By allowing a custom function `f`, wiretap can be used for multiple different purposes.
+Any [var](https://clojure.org/reference/vars) whose value is an instance of Fn or MultiFn (i.e was created via [`fn`](https://clojure.github.io/clojure/clojure.core-api.html#clojure.core/fn) or [`defmulti`](https://clojure.github.io/clojure/clojure.core-api.html#clojure.core/defmulti)) can be wiretapped. 
 
-## Releases
+As a user of the library, you provide a function that will be called before and/or after any wiretapped function or method is invoked. This function can be used to perform any side effecting operations - for example swapping values in an atom, or simply calling `println`. This custom function is passed a context map that contains information about the invocation of the var - the values vary depending on whether the function is called before or after the invocation. For more information see [wiretap context](#wiretap-context).
+
+This pre/post pattern captures the essence of a trace, however wiretap can be used for multiple different purposes.
+
+# Releases
 
 As a git dep:
 ```clojure
@@ -32,7 +36,43 @@ As a Maven dep:
 io.github.beoliver/wiretap {:mvn/version "0.0.10"}
 ```
 
- # API
+# Supported Types
+
+| Instance | wiretap |
+| -------- | ---------- |
+| `Fn`     | Wraps invocation of the function |
+| `MultiFn` | Wraps invocation of the selected method determined by the dispatch-value |
+
+# Wiretap Context
+
+Depending on whether the user provided function is called before or after the invocation of the wiretapped var, the context map will contain different information. The following table shows the keys that will be present in the context map and when they will be present.
+
+| Key         | When     | Value                                                            |
+| ----------- | -------- | ---------------------------------------------------------------- |
+| `:id`       | pre/post | Uniquely identifies the call. Same value for pre and post calls. |
+| `:name`     | pre/post | A symbol. Taken from the _meta_ of the var.                      |
+| `:ns`       | pre/post | A namespace. Taken from the _meta_ of the var.                   |
+| `:function` | pre/post | The value that will be applied to the value of `:args`.          |
+| `:thread`   | pre/post | The name of the thread.                                          |
+| `:stack`    | pre/post | The current stacktrace.                                          |
+| `:depth`    | pre/post | Number of _wiretapped_ function calls on the stack.              |
+| `:args`     | pre/post | The seq of args that value of `:function` will be applied to.    |
+| `:start`    | pre/post | Nanoseconds since some fixed but arbitrary origin time.          |
+| `:parent`   | pre/post | The context of the previous wiretapped function on the stack.    |
+| `:pre?`     | pre      | `true`                                                           |
+| `:post?`    | post     | `true`                                                           |
+| `:stop`     | post     | Nanoseconds since some fixed but arbitrary origin time.          |
+| `:result`   | post     | The result of applying the value of `:function` to `:args`.      |
+| `:error`    | post     | Any exception caught during computation of the result.           |
+
+If the wiretapped var is a multimethod then the following information will also be present.
+
+| Key              | When     | Value                                                       |
+| ---------------- | ---------| ----------------------------------------------------------- |
+| `:multimethod?`  | pre/post | `true`                                                      |
+| `:dispatch-val`  | pre/post | The dispatch value used to select the method.               |
+
+# API
 
 Documentation hosted [here](https://beoliver.github.io/wiretap/index.html)
 
