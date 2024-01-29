@@ -45,6 +45,23 @@
                    {:name 'simple :parent (:id call-f-event)}]
                   (mapv #(select-keys % [:name :parent]) @state))))))
 
+(test/deftest order-test
+  (let [state (atom [])]
+    (test/testing "pre install"
+      (wiretap/install-pre! #(swap! state conj %) vars-of-interest)
+      (test/is (= 1 (sut/pass-simple 1)) "expected value")
+      (test/is (= ['pass-simple 'call-f 'simple] (map :name @state))))
+    (test/testing "post install"
+      (reset! state [])
+      (wiretap/install-post! #(swap! state conj %) vars-of-interest)
+      (test/is (= 1 (sut/pass-simple 1)) "expected value")
+      (test/is (= ['simple 'call-f 'pass-simple] (map :name @state))))
+    (test/testing "pre and post install"
+      (reset! state [])
+      (wiretap/install! #(swap! state conj %) vars-of-interest)
+      (test/is (= 1 (sut/pass-simple 1)) "expected value")
+      (test/is (= ['pass-simple 'call-f 'simple 'simple 'call-f 'pass-simple] (map :name @state))))))
+
 (test/deftest map-simple-test
   (let [state (wiretap-events #{:pre} vars-of-interest)]
     (test/is (= [1 2 3] (sut/map-simple [1 2 3])) "expected value")
@@ -150,22 +167,14 @@
 
 (test/deftest multimethod-test
   (let [state (atom [])]
-    (wiretap/install! #(swap! state conj %) [#'sut/my-multi])
-    (test/is (= {:the-cat "felix"}
-                (sut/my-multi {:animal :cat :name "felix"})))
-    (test/is (= 2 (count @state)))
-    (test/is (every?
-              #(= {:name 'my-multi :multimethod? true :dispatch-val :cat}
-                  (select-keys % [:name :multimethod? :dispatch-val]))
-              @state))
+    (wiretap/install-pre! #(swap! state conj %) [#'sut/my-multi])
+    (test/is (= {:the-cat "felix"} (sut/my-multi {:animal :cat :name "felix"})))
+    (test/is (= [{:name 'my-multi :multimethod? true :dispatch-val :cat}]
+                (mapv #(select-keys % [:name :multimethod? :dispatch-val]) @state)))
     (reset! state [])
-    (test/is (= {:the-dog "rover"}
-                (sut/my-multi {:animal :dog :name "rover"})))
-    (test/is (= 2 (count @state)))
-    (test/is (every?
-              #(= {:name 'my-multi :multimethod? true :dispatch-val :dog}
-                  (select-keys % [:name :multimethod? :dispatch-val]))
-              @state))))
+    (test/is (= {:the-dog "rover"} (sut/my-multi {:animal :dog :name "rover"})))
+    (test/is (= [{:name 'my-multi :multimethod? true :dispatch-val :dog}]
+                (mapv #(select-keys % [:name :multimethod? :dispatch-val]) @state)))))
 
 (comment
   (run! (partial ns-unmap *ns*) (keys (ns-interns *ns*))))
