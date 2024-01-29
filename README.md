@@ -7,7 +7,7 @@
 
 <img src="./wiretap.jpg" title="wiretap" width="50%" align="right"/>
 
-> **wiretap** | ˈwʌɪətap |
+> **wiretap** | ˈwʌɪətap
 >
 > [**noun**]
 >
@@ -17,9 +17,16 @@
 >
 > To install or to use such a device.
 
- Given a [var](https://clojure.org/reference/vars) whose value is an instance of Fn or MultiFn, i.e was created by `fn` or `defmulti` - wiretap lets you `install!` a side effecting function `f` that will be called both **pre** and **post** invocation of the var's original value.
+This library lets you install a side effecting function on any [var](https://clojure.org/reference/vars) whose value is an instance of Fn or MultiFn (i.e was created via [`fn`](https://clojure.github.io/clojure/clojure.core-api.html#clojure.core/fn) or [`defmulti`](https://clojure.github.io/clojure/clojure.core-api.html#clojure.core/defmulti)).
 
-This pattern captures the _essence_ of a trace. By allowing a custom function `f`, wiretap can be used for multiple different purposes.
+| value | wiretap called | 
+| -------- | ---------- |
+| `Fn`     | Both **pre** and **post** invocation of the function |
+| `MultiFn` | Both **pre** and **post** invocation of the selected function (method) determined by the dispatch-value |
+
+The supplied function should accept one argument - a map representing the **context** of the call. The context contains information such as the name of the var, the args passed to it, the result of the call and whether it is pre or post invocation.
+
+This pattern captures the _essence_ of a trace, however wiretap can be used for multiple different purposes.
 
 ## Releases
 
@@ -28,6 +35,7 @@ As a git dep:
 io.github.beoliver/wiretap {:git/sha "074eed9"}
 ```
 As a Maven dep:
+
 ```clojure
 io.github.beoliver/wiretap {:mvn/version "0.0.10"}
 ```
