@@ -99,6 +99,19 @@ When `f` is called **post** invocation the following information will also be pr
 | `:result` | The result computed by applying the value of `:function` to the value of `:args`. |
 | `:error`  | Any exception caught during computation of the result.                            |
 
+ ## `wiretap.wiretap/install-pre!`
+ ```clojure
+ (install-pre! [f vars])
+ ```
+ Like `install!` but ensures that `f` is only called **pre** invocation. Useful if you are not interested in the results of the wiretapped vars.
+
+ ## `wiretap.wiretap/install-post!`
+ ```clojure
+ (install-post! [f vars])
+ ```
+Like `install!` but ensures that `f` is only called **post** invocation. Useful if you only care about the results of the wiretapped vars.
+
+
 
 
  ## `wiretap.wiretap/uninstall!`
@@ -106,14 +119,11 @@ When `f` is called **post** invocation the following information will also be pr
  ```clojure
  (uninstall! ([]) ([vars]))
  ```
+Uninstalls all wiretaps from all applicable vars in vars.
 
-Sets the root binding of every applicable var to a be the value before calling
-   `install!`. If called without any arguments then all vars in namespaces available
-   via `clojure.core/all-ns` will be checked.
+> A var is considered applicable if the key `:wiretap.wiretap/uninstall` is present in the metadata and the key `:wiretap.wiretap/exclude` is not.
 
-> A var is considered applicable if has been wiretapped and its metadata does not contain the key `:wiretap.wiretap/exclude`.
-
-   Returns a coll of all modified vars.
+Returns a coll of all modified vars.   
 
  ## `wiretap.tools/ns-matches-vars`
 
