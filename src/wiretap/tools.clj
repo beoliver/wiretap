@@ -6,14 +6,16 @@
 (defn ns-matches
   "Given an instance of java.util.regex.Pattern, returns a sorted coll of symbols 
    naming the currently loaded libs that are matched by `regex`."
+  {:doc/format :markdown}
   [regex]
   (->> (loaded-libs)
-       (filter 
+       (filter
         (comp (partial re-matches regex) name))))
 
 (defn ns-matches-vars
   "Given an instance of java.util.regex.Pattern, returns a seq of all vars 
    that have been interned in namespaces matched by the regex"
+  {:doc/format :markdown}
   [regex]
   (apply ns-vars (ns-matches regex)))
 
