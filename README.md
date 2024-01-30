@@ -29,11 +29,11 @@ This pre/post pattern captures the essence of a trace, however wiretap can be us
 
 As a git dep:
 ```clojure
-io.github.beoliver/wiretap {:git/sha "ba28311"}
+io.github.beoliver/wiretap {:git/sha "7688a8e"}
 ```
 As a Maven dep:
 ```clojure
-io.github.beoliver/wiretap {:mvn/version "0.0.10"}
+io.github.beoliver/wiretap {:mvn/version "0.0.17"}
 ```
 
 # A Simple Example
