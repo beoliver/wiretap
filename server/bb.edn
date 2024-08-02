@@ -1,0 +1,2 @@
+{:paths ["src" "resources"]
+ :deps {org.clojars.askonomm/ruuter {:mvn/version "1.3.4"}}}
