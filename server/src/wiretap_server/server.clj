@@ -78,9 +78,24 @@
 (def routes [{:path "/"
               :method :get
               :response (fn [_]
-                          (println "COOL")
                           {:status 200
                            :body (slurp (io/resource "public/index.html"))})}
+             {:path "/app.js"
+              :method :get
+              :response (fn [_]
+                          {:status 200
+                           :headers {"Content-Type" "text/javascript"}
+                           :body (slurp (io/resource "public/app.js"))})}
+             {:path "/style.css"
+              :method :get
+              :response (fn [_]
+                          {:status 200
+                           :body (slurp (io/resource "public/style.css"))})}
+             {:path "/favicon.ico"
+              :method :get
+              :response (fn [_]
+                          {:status 200
+                           :body (slurp (io/resource "public/favicon.ico"))})}
              {:path "/connect-ws"
               :method :get
               :response ws-connect-handler}

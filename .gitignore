@@ -18,3 +18,4 @@ pom.xml.asc
 .lein-failures
 .nrepl-port
 .cpcache/
+.vscode/

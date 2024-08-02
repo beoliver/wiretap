@@ -1,0 +1,48 @@
+/* Apply styles to ensure full height without scrollbar */
+html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background-color: aliceblue;
+    display: flex;
+    flex-direction: column;
+}
+
+#repl-connection {
+    padding: 1em 1em 1em 1em;
+}
+
+#container {
+    display: flex;
+    flex: 1; /* Ensure container takes up the remaining space */
+    flex-direction: row;
+    height: 100%; /* Ensure full height for columns */
+}
+
+#loaded-libs {
+    flex: 1;
+    background-color: green;
+}
+
+#definitions {
+    flex: 1;
+    background-color: yellow;
+}
+
+#traces {
+    flex: 1;
+    background-color: red;
+}
+
+#value {
+    flex: 1;
+    background-color: blue;
+}
+
+.narrow {
+    flex: 0.1 !important;
+}
