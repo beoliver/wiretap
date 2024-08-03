@@ -1,6 +1,5 @@
 (ns wiretap-server.server
-  (:require [clojure.pprint :refer [pprint]]
-            [wiretap-server.state :refer [messages]]
+  (:require [wiretap-server.logging :as log]
             [org.httpkit.server :as server]
             [ruuter.core :as ruuter]
             [cheshire.core :as json]
@@ -14,7 +13,7 @@
                       :websocket-ch nil}))
 
 (defn init-event-socket! [port callback-fn]
-  (swap! messages conj {:init-event-socket! callback-fn}) 
+  (log/info {:init-event-socket! callback-fn})
   (when (:socket @state)
     (.close (:socket @state)))
   (let [server-socket (new java.net.ServerSocket port)]
@@ -23,20 +22,19 @@
       (try
         (while true
           (let [socket (.accept server-socket)]
-            (swap! messages conj {:init-event-socket! "accepted connection!"})  
+            (log/info {:init-event-socket! "accepted connection!"})
             (future
               (try (let [input-stream (.getInputStream socket)
                          reader (new java.io.BufferedReader (new java.io.InputStreamReader input-stream))]
                      (loop [msg (.readLine reader)]
                        (when msg
                          (let [edn (load-string msg)]
-                           (swap! messages conj {:init-event-socket! {:edn edn}})  
+                           (log/info {:init-event-socket! {:edn edn}})
                            (callback-fn edn))
                          (recur (.readLine reader)))))
-                   (catch Exception e (clojure.pprint/pprint e))
+                   (catch Exception e (log/error e))
                    (finally (.close socket))))))
-        (catch Exception e
-          (clojure.pprint/pprint e))))
+        (catch Exception e (log/error e))))
     (swap! state assoc :socket server-socket)))
 
 (comment
@@ -44,13 +42,14 @@
                       (fn [edn]
                         (if-some [websocket-ch (:websocket-ch @state)]
                           (server/send! websocket-ch (json/encode edn))
-                          (clojure.pprint/pprint edn))))
+                          (log/info {:init-event-socket! {:no-ws true
+                                                          :edn edn}}))))
   (commands/load-wiretap! 56442)
   (commands/uninstall-wiretaps! 56442)
   )
 
 (defn ws-connect-handler [req]
-  (swap! messages conj {:ws-connect-handler true}) 
+  (log/info {:ws-connect-handler true}) 
   (server/as-channel
    req
    {:on-open (fn [ch]
@@ -60,7 +59,7 @@
                (swap! state assoc :websocket-ch ch))}))
 
 (defn nrepl-connect-handler [{:keys [params] :as req}] 
-  (swap! messages conj {:nrepl-connect-handler true}) 
+  (log/info {:nrepl-connect-handler true}) 
   (if-not (:websocket-ch @state)
     {:status 500}
     (let [nrepl-port (Long/parseLong (:nrepl-port params))]
@@ -69,13 +68,18 @@
                           (fn [edn]
                             (if-some [websocket-ch (:websocket-ch @state)] 
                               (do 
-                                (swap! messages conj {:server-send edn}) 
+                                (log/info {:server-send edn})
                                 (server/send! websocket-ch (json/encode edn)))
-                              (clojure.pprint/pprint edn))))
+                              (log/info edn))))
       (commands/load-wiretap! nrepl-port))))
 
 
-(def routes [{:path "/"
+(def routes [{:path "/test"
+              :method :get 
+              :response (fn [_] 
+                          (log/info {:test "it was just a test"})
+                          {:status 200})}
+             {:path "/"
               :method :get
               :response (fn [_]
                           {:status 200

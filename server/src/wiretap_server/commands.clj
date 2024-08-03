@@ -1,5 +1,5 @@
 (ns wiretap-server.commands
-  (:require [wiretap-server.state :refer [messages]]
+  (:require [wiretap-server.logging :as log]
             [wiretap-server.nrepl :as nrepl-client]))
 
 (def root-path
@@ -11,7 +11,7 @@
         load-expr (format "(do (load-file \"%s\") (load-file \"%s\"))" path-to-wiretap path-to-wiretapper)
         data {:host "localhost" :port nrepl-port :expr load-expr}
         res (nrepl-client/eval-expr data)] 
-    (swap! messages conj {:load-wiretap! {:in data :result res}})
+    (log/info {:load-wiretap! {:in data :result res}})
     res))
 
 (defn uninstall-wiretaps! [nrepl-port] 
