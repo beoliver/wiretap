@@ -8,9 +8,9 @@
 
 ;; https://github.com/askonomm/ruuter?tab=readme-ov-file
 
-(defonce state (atom {:socket nil 
-                      :server nil
-                      :websocket-ch nil}))
+(def empty-state {:socket nil :server nil :websocket-ch nil})
+
+(defonce state (atom empty-state))
 
 (defn init-event-socket! [port callback-fn]
   (log/info {:init-event-socket! callback-fn})
@@ -22,14 +22,14 @@
       (try
         (while true
           (let [socket (.accept server-socket)]
-            (log/info {:init-event-socket! "accepted connection!"})
+            (log/info "accepted socket connection from clojure project")
             (future
               (try (let [input-stream (.getInputStream socket)
                          reader (new java.io.BufferedReader (new java.io.InputStreamReader input-stream))]
                      (loop [msg (.readLine reader)]
                        (when msg
                          (let [edn (load-string msg)]
-                           (log/info {:init-event-socket! {:edn edn}})
+                           (log/info {:message edn})
                            (callback-fn edn))
                          (recur (.readLine reader)))))
                    (catch Exception e (log/error e))
@@ -54,16 +54,20 @@
    req
    {:on-open (fn [ch]
                (when (:websocket-ch @state)
-                 (println "closing existing channel")
+                 (log/info "closing existing ws channel")
                  (server/close (:websocket-ch state)))
-               (swap! state assoc :websocket-ch ch))}))
+               (swap! state assoc :websocket-ch ch))
+    :on-close (fn [ch status-code]
+                (log/info {:status-code status-code
+                           :what "channel closed"})) 
+    }))
 
 (defn nrepl-connect-handler [{:keys [params] :as req}] 
   (log/info {:nrepl-connect-handler true}) 
   (if-not (:websocket-ch @state)
     {:status 500}
     (let [nrepl-port (Long/parseLong (:nrepl-port params))]
-      (println {:nrepl-port nrepl-port})
+      (log/info {:nrepl-port nrepl-port})
       (init-event-socket! 9876
                           (fn [edn]
                             (if-some [websocket-ch (:websocket-ch @state)] 
@@ -117,26 +121,23 @@
              ])
 
 
-(defn handler [req]
-  (def req req)
+(defn app [req]
   (ruuter/route routes req))
-
-(def app
-  (-> #'handler
-    ;;   wrap-params
-    ;;   (wrap-resource "public")
-    ;;   wrap-cors
-      ))
-
 
 (defn start-server!
   "Starts the server on the given port."
   [port]
-  (when (:server @state)
-    ((:server @state)))
+  (when-some [server (:server @state)]
+    (server))
+  (when-some [client-websocket (:websocket-ch @state)]
+    (try (server/close client-websocket)
+         (catch Exception e (log/error e))))
+  (when-some [socket (:socket @state)]
+    (try (.close socket)
+         (catch Exception e (log/error e))))
   (let [server (server/run-server #'app {:port port})]
-    (println (str "Server started on port " port))
-    (swap! state assoc :server server)))
+    (log/info (str "Server started on port " port)) 
+    (reset! state (assoc empty-state :server server))))
 
 (comment
   (start-server! 7777)
