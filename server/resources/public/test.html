@@ -142,6 +142,13 @@
       background-color: rgb(85, 85, 142);
       background-color: #2f4f4f;
     }
+
+    .big-box {
+      height: 100%;
+      width: 100%;      
+      display: none;      
+    }
+
   </style>
 </head>
 
@@ -154,20 +161,20 @@
 
   <div class="columns-container">
     <div class="column" id="column1">
-      <div class="column-header">
-        <span class="column-title">Column 1</span>
-        <button class="button" onclick="toggleContent(1)"><i class="fas fa-compress-alt"></i></button>
+      <div class="column-header" onclick="toggleContent(1)">
+        <span class="column-title">Column 1</span>        
       </div>
       <div class="column-content">
         <p>Content of Column 1</p>
+      </div>      
+      <div  class="big-box" onclick="toggleContent(1)">
+        <div class="side-text">Column 1</div>
       </div>
-      <div class="side-text" onclick="toggleContent(1)">Column 1</div>
     </div>
 
     <div class="column" id="column2">
-      <div class="column-header">
-        <span class="column-title">Column 2</span>
-        <button class="button" onclick="toggleContent(2)"><i class="fas fa-compress-alt"></i></button>
+      <div class="column-header" onclick="toggleContent(2)">
+        <span class="column-title">Column 2</span>        
       </div>
       <div class="column-content">
         <p>Content of Column 2</p>
@@ -175,29 +182,34 @@
         This is some code {very exciting!} but how (long does it go on for?)
         </pre>
       </div>
-      <div class="side-text" onclick="toggleContent(2)">Column 2</div>
+      <div  class="big-box" onclick="toggleContent(2)">
+        <div class="side-text">Column 2</div>
+      </div>
     </div>
 
     <div class="column" id="column3">
-      <div class="column-header">
-        <span class="column-title">Column 3</span>
-        <button class="button" onclick="toggleContent(3)"><i class="fas fa-compress-alt"></i></button>
+      <div class="column-header" onclick="toggleContent(3)">
+        <span class="column-title">Column 3</span>        
       </div>
       <div class="column-content">
         <p>Content of Column 3</p>
       </div>
-      <div class="side-text" onclick="toggleContent(3)">Column 3</div>
+      <div  class="big-box" onclick="toggleContent(3)">
+        <div class="side-text">Column 3</div>
+      </div>
+
     </div>
 
     <div class="column" id="column4">
-      <div class="column-header">
-        <span class="column-title">Column 4</span>
-        <button class="button" onclick="toggleContent(4)"><i class="fas fa-compress-alt"></i></button>
+      <div class="column-header" onclick="toggleContent(4)">
+        <span class="column-title">Column 4</span>        
       </div>
       <div class="column-content">
         <p>Content of Column 4</p>
       </div>
-      <div class="side-text" onclick="toggleContent(4)">Column 4</div>
+      <div  class="big-box" onclick="toggleContent(4)">
+        <div class="side-text">Column 4</div>
+      </div>
     </div>
   </div>
 
@@ -205,23 +217,21 @@
   <script>
     function toggleContent(columnNumber) {
       const column = document.getElementById('column' + columnNumber);
-      const content = column.querySelector('.column-content');
-      const button = column.querySelector('.button');
-      const sideText = column.querySelector('.side-text');
+      const content = column.querySelector('.column-content');      
+      const bigBox = column.querySelector('.big-box');
       const header = column.querySelector('.column-header');
 
-      if (column.classList.contains('minimized')) {
+      console.log('bigBox', bigBox);
+
+      if (column.classList.contains('minimized')) {        
         column.classList.remove('minimized');
-        content.classList.remove('hidden');
-        sideText.style.display = 'none';
-        button.classList.remove('hidden');
-        header.style.display = 'flex';
-        button.innerHTML = '<i class="fas fa-compress-alt"></i>';
-      } else {
+        content.classList.remove('hidden');        
+        bigBox.style.display = 'none';            
+        header.style.display = 'flex';        
+      } else {        
         column.classList.add('minimized');
-        content.classList.add('hidden');
-        sideText.style.display = 'block';
-        button.classList.add('hidden');
+        content.classList.add('hidden');        
+        bigBox.style.display = 'block';            
         header.style.display = 'none';
       }
     }
