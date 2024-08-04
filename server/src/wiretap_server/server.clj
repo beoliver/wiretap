@@ -78,12 +78,7 @@
       (commands/load-wiretap! nrepl-port))))
 
 
-(def routes [{:path "/test"
-              :method :get 
-              :response (fn [_] 
-                          (log/info {:test "it was just a test"})
-                          {:status 200})}
-             {:path "/"
+(def routes [{:path "/"
               :method :get
               :response (fn [_]
                           {:status 200

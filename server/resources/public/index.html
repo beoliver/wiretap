@@ -1,34 +1,71 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>WebSocket Example</title>
-    <!-- include style.css -->
-    <link rel="stylesheet" href="style.css" />
-  </head>
-  <body>
-    <!-- Connection  -->
-    <div id="repl-connection">
-      <label for="port">nREPL port:</label>
-      <input type="text" id="port" name="port" />
-      <button id="connectButton">Connect</button>
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Expandable Columns with Header</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <link rel="stylesheet" href="style.css">
+  <script src="app.js"></script>
+</head>
+
+<body>
+  <div id="repl-connection">
+    <label for="port">nREPL port:</label>
+    <input type="text" id="port" name="port" />
+    <button id="connectButton">Connect</button>
+  </div>
+
+  <div class="columns-container">
+    <div class="column" id="column1">
+      <div class="column-header">
+        <span class="column-title">Column 1</span>
+        <button class="button" onclick="toggleContent(1)"><i class="fas fa-compress-alt"></i></button>
+      </div>
+      <div class="column-content">
+        <p>Content of Column 1</p>
+      </div>
+      <div class="side-text" onclick="toggleContent(1)">Column 1</div>
     </div>
-    <div id="container">      
-      <div id="loaded-libs">
-        <button onclick="toggleWidth('loaded-libs')">Toggle Loaded Libs</button>        
+
+    <div class="column" id="column2">
+      <div class="column-header">
+        <span class="column-title">Column 2</span>
+        <button class="button" onclick="toggleContent(2)"><i class="fas fa-compress-alt"></i></button>
       </div>
-      <div id="definitions">
-        <button onclick="toggleWidth('definitions')">Toggle Definitions</button>        
+      <div class="column-content">
+        <p>Content of Column 2</p>
+        <pre>
+        This is some code {very exciting!} but how (long does it go on for?)
+    </pre>
       </div>
-      <div id="traces">
-        <button onclick="toggleWidth('traces')">Toggle Traces</button>        
-      </div>
-      <div id="value">
-        <button onclick="toggleWidth('value')">Toggle Value</button>        
-      </div>      
+      <div class="side-text" onclick="toggleContent(2)">Column 2</div>
     </div>
-    <!-- include script.js -->
-    <script src="app.js"></script>
-  </body>
+
+    <div class="column" id="column3">
+      <div class="column-header">
+        <span class="column-title">Column 3</span>
+        <button class="button" onclick="toggleContent(3)"><i class="fas fa-compress-alt"></i></button>
+      </div>
+      <div class="column-content">
+        <p>Content of Column 3</p>
+      </div>
+      <div class="side-text" onclick="toggleContent(3)">Column 3</div>
+    </div>
+
+    <div class="column" id="column4">
+      <div class="column-header">
+        <span class="column-title">Column 4</span>
+        <button class="button" onclick="toggleContent(4)"><i class="fas fa-compress-alt"></i></button>
+      </div>
+      <div class="column-content">
+        <p>Content of Column 4</p>
+      </div>
+      <div class="side-text" onclick="toggleContent(4)">Column 4</div>
+    </div>
+  </div>
+
+</body>
+
 </html>

@@ -1,7 +1,26 @@
-function toggleWidth(columnId) {
-    const element = document.getElementById(columnId);
-    element.classList.toggle('narrow');
+
+function toggleContent(columnNumber) {
+  const column = document.getElementById('column' + columnNumber);
+  const content = column.querySelector('.column-content');
+  const button = column.querySelector('.button');
+  const sideText = column.querySelector('.side-text');
+  const header = column.querySelector('.column-header');
+
+  if (column.classList.contains('minimized')) {
+    column.classList.remove('minimized');
+    content.classList.remove('hidden');
+    sideText.style.display = 'none';
+    button.classList.remove('hidden');
+    header.style.display = 'flex';
+    button.innerHTML = '<i class="fas fa-compress-alt"></i>';
+  } else {
+    column.classList.add('minimized');
+    content.classList.add('hidden');
+    sideText.style.display = 'block';
+    button.classList.add('hidden');
+    header.style.display = 'none';
   }
+}
 
 document.addEventListener("DOMContentLoaded", (event) => {
   document

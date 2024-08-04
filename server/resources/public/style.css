@@ -1,48 +1,97 @@
-/* Apply styles to ensure full height without scrollbar */
-html, body {
-    height: 100%;
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
+html,
+    body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+    }
 
-body {
-    background-color: aliceblue;
-    display: flex;
-    flex-direction: column;
-}
+    body {
+      display: flex;
+      flex-direction: column;
+    }
 
-#repl-connection {
-    padding: 1em 1em 1em 1em;
-}
+    .columns-container {
+      display: flex;
+      flex-direction: row;
+      flex: 1;
+    }
 
-#container {
-    display: flex;
-    flex: 1; /* Ensure container takes up the remaining space */
-    flex-direction: row;
-    height: 100%; /* Ensure full height for columns */
-}
+    .column {
+      flex: 1;
+      border: 1px solid #000;
+      box-sizing: border-box;
+      position: relative;
+      height: 100%;
+      min-width: 50px;
+      display: flex;
+      flex-direction: column;
+    }
 
-#loaded-libs {
-    flex: 1;
-    background-color: green;
-}
+    .column.minimized {
+      flex: 0 0 50px;
+      padding: 0;
+    }
 
-#definitions {
-    flex: 1;
-    background-color: yellow;
-}
+    .column.minimized .side-text {
+      display: block;
+    }
 
-#traces {
-    flex: 1;
-    background-color: red;
-}
+    .column.minimized .column-header {
+      display: none;
+    }
 
-#value {
-    flex: 1;
-    background-color: blue;
-}
+    .column.hidden {
+      display: none;
+    }
 
-.narrow {
-    flex: 0.1 !important;
-}
+    .column-content {
+      overflow: auto;
+      flex: 1;
+    }
+
+    .column-content.hidden {
+      display: none;
+    }
+
+    .column-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 5px;
+      background-color: #f0f0f0;
+      border-bottom: 1px solid #000;
+    }
+
+    .button.hidden {
+      display: none;
+    }
+
+    .side-text {
+      display: none;
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: rotate(-90deg) translate(-50%, -50%);
+      transform-origin: left top;
+      white-space: nowrap;
+      background-color: #f0f0f0;
+      padding: 5px;
+      border: 1px solid #000;
+      cursor: pointer;
+    }
+
+    #column1 {
+      background-color: red;
+    }
+
+    #column2 {
+      background-color: green;
+    }
+
+    #column3 {
+      background-color: blue;
+    }
+
+    #column4 {
+      background-color: yellow;
+    }
