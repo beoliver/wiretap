@@ -1,97 +1,138 @@
+/* Import Google Font for modern typography */
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap');
+
 html,
-    body {
-      height: 100%;
-      margin: 0;
-      padding: 0;
-    }
+body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  font-family: 'Roboto', sans-serif; /* Updated font for a contemporary look */
+  color: #333; /* Updated text color for better readability */
+}
 
-    body {
-      display: flex;
-      flex-direction: column;
-    }
+body {
+  display: flex;
+  flex-direction: column;
+  background-color: #FAF9F6;  
+}
 
-    .columns-container {
-      display: flex;
-      flex-direction: row;
-      flex: 1;
-    }
+.columns-container {
+  display: flex;
+  flex-direction: row;
+  flex: 1;
+}
 
-    .column {
-      flex: 1;
-      border: 1px solid #000;
-      box-sizing: border-box;
-      position: relative;
-      height: 100%;
-      min-width: 50px;
-      display: flex;
-      flex-direction: column;
-    }
+.column {
+  flex: 1;
+  border-right: 1px solid #e0e0e0; /* Subtle border for separation */
+  box-sizing: border-box;
+  position: relative;
+  height: 100%;
+  min-width: 60px; /* Increased minimum width for better usability */
+  display: flex;
+  flex-direction: column;
+  transition: flex 0.3s ease, background-color 0.3s ease; /* Smooth transition effects */
+}
 
-    .column.minimized {
-      flex: 0 0 50px;
-      padding: 0;
-    }
+.column.minimized {
+  flex: 0 0 60px; /* Updated to match new min-width */
+  padding: 0;
+}
 
-    .column.minimized .side-text {
-      display: block;
-    }
+.column.minimized .side-text {
+  display: block;
+}
 
-    .column.minimized .column-header {
-      display: none;
-    }
+.column.minimized .column-header {
+  display: none;
+}
 
-    .column.hidden {
-      display: none;
-    }
+.column.hidden {
+  display: none;
+}
 
-    .column-content {
-      overflow: auto;
-      flex: 1;
-    }
+.column-content {
+  overflow: auto;
+  flex: 1;
+  padding: 15px; /* Increased padding for a more spacious feel */
+  background-color: #FAF9F6;
+}
 
-    .column-content.hidden {
-      display: none;
-    }
+.column-content.hidden {
+  display: none;
+}
 
-    .column-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 5px;
-      background-color: #f0f0f0;
-      border-bottom: 1px solid #000;
-    }
+/* Header colors reflect the column colors */
 
-    .button.hidden {
-      display: none;
-    }
 
-    .side-text {
-      display: none;
-      position: absolute;
-      left: 50%;
-      top: 50%;
-      transform: rotate(-90deg) translate(-50%, -50%);
-      transform-origin: left top;
-      white-space: nowrap;
-      background-color: #f0f0f0;
-      padding: 5px;
-      border: 1px solid #000;
-      cursor: pointer;
-    }
+#column1 .column-header {
+  background-color: rgb(198, 52, 81);
+  background-color: #4d0000;
+  background-color: #cc3333;
+}
 
-    #column1 {
-      background-color: red;
-    }
+#column2 .column-header {
+    background-color: #4f9865;
+    background-color: #2f4f2f;
+    background-color: #009966;
+  }
 
-    #column2 {
-      background-color: green;
-    }
+#column3 .column-header {
+  background-color: #1e8fe4;
+  background-color: #003366;
+  /* background-color: #3857b3; */
+}
 
-    #column3 {
-      background-color: blue;
-    }
+#column4 .column-header {
+  background-color: rgb(85, 85, 142);
+  background-color: #2f4f4f;
+}
 
-    #column4 {
-      background-color: yellow;
-    }
+.column-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px; /* Updated padding for a more modern feel */
+  color: #ffffff; /* White text color for contrast */
+  border-bottom: 1px solid rgba(0,0,0,0.1); /* Subtle border for separation */
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1); /* Light shadow for depth */
+}
+
+.button.hidden {
+  display: none;
+}
+
+.side-text {
+  display: none;
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: rotate(-90deg) translate(-50%, -50%);
+  transform-origin: left top;
+  white-space: nowrap;
+  /* background-color: #ffffff;  */
+  padding: 10px; /* Increased padding for better appearance */  
+  cursor: pointer;  
+  color: #ffffff;
+}
+
+/* Updated color scheme for columns */
+#column1 {
+  background-color: #4f9865;
+  background-color: #cc3333;
+}
+
+#column2 {
+  background-color: rgb(198, 52, 81);
+  background-color: #009966;
+}
+
+#column3 {
+  background-color: #1e8fe4;
+  background-color: #003366;
+}
+
+#column4 {
+  background-color: rgb(85, 85, 142);
+  background-color: #2f4f4f;
+}

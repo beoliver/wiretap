@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Expandable Columns with Header</title>
+  <style>
+    /* Import Google Font for modern typography */
+    @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap');
+
+    html,
+    body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      font-family: 'Roboto', sans-serif; /* Updated font for a contemporary look */
+      color: #333; /* Updated text color for better readability */
+    }
+
+    body {
+      display: flex;
+      flex-direction: column;
+      background-color: #FAF9F6;
+    }
+
+    .columns-container {
+      display: flex;
+      flex-direction: row;
+      flex: 1;
+    }
+
+    .column {
+      flex: 1;
+      border-right: 1px solid #e0e0e0; /* Subtle border for separation */
+      box-sizing: border-box;
+      position: relative;
+      height: 100%;
+      min-width: 60px; /* Increased minimum width for better usability */
+      display: flex;
+      flex-direction: column;
+      transition: flex 0.3s ease, background-color 0.3s ease; /* Smooth transition effects */
+    }
+
+    .column.minimized {
+      flex: 0 0 60px; /* Updated to match new min-width */
+      padding: 0;
+    }
+
+    .column.minimized .side-text {
+      display: block;
+    }
+
+    .column.minimized .column-header {
+      display: none;
+    }
+
+    .column.hidden {
+      display: none;
+    }
+
+    .column-content {
+      overflow: auto;
+      flex: 1;
+      padding: 15px; /* Increased padding for a more spacious feel */
+      background-color: #FAF9F6;
+    }
+
+    .column-content.hidden {
+      display: none;
+    }
+
+    /* Header colors reflect the column colors */
+    #column1 .column-header {
+      background-color: rgb(198, 52, 81);
+      background-color: #4d0000;
+      background-color: #cc3333;
+    }
+
+    #column2 .column-header {
+      background-color: #4f9865;
+      background-color: #2f4f2f;
+      background-color: #009966;
+    }
+
+    #column3 .column-header {
+      background-color: #1e8fe4;
+      background-color: #003366;
+      /* background-color: #3857b3; */
+    }
+
+    #column4 .column-header {
+      background-color: rgb(85, 85, 142);
+      background-color: #2f4f4f;
+    }
+
+    .column-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 15px; /* Updated padding for a more modern feel */
+      color: #ffffff; /* White text color for contrast */
+      border-bottom: 1px solid rgba(0,0,0,0.1); /* Subtle border for separation */
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1); /* Light shadow for depth */
+    }
+
+    .button.hidden {
+      display: none;
+    }
+
+    .side-text {
+      display: none;
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: rotate(-90deg) translate(-50%, -50%);
+      transform-origin: left top;
+      white-space: nowrap;
+      /* background-color: #ffffff;  */
+      padding: 10px; /* Increased padding for better appearance */  
+      cursor: pointer;  
+      color: #ffffff;
+    }
+
+    /* Updated color scheme for columns */
+    #column1 {
+      background-color: #4f9865;
+      background-color: #cc3333;
+    }
+
+    #column2 {
+      background-color: rgb(198, 52, 81);
+      background-color: #009966;
+    }
+
+    #column3 {
+      background-color: #1e8fe4;
+      background-color: #003366;
+    }
+
+    #column4 {
+      background-color: rgb(85, 85, 142);
+      background-color: #2f4f4f;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="repl-connection">
+    <label for="port">nREPL port:</label>
+    <input type="text" id="port" name="port" />
+    <button id="connectButton">Connect</button>
+  </div>
+
+  <div class="columns-container">
+    <div class="column" id="column1">
+      <div class="column-header">
+        <span class="column-title">Column 1</span>
+        <button class="button" onclick="toggleContent(1)"><i class="fas fa-compress-alt"></i></button>
+      </div>
+      <div class="column-content">
+        <p>Content of Column 1</p>
+      </div>
+      <div class="side-text" onclick="toggleContent(1)">Column 1</div>
+    </div>
+
+    <div class="column" id="column2">
+      <div class="column-header">
+        <span class="column-title">Column 2</span>
+        <button class="button" onclick="toggleContent(2)"><i class="fas fa-compress-alt"></i></button>
+      </div>
+      <div class="column-content">
+        <p>Content of Column 2</p>
+        <pre>
+        This is some code {very exciting!} but how (long does it go on for?)
+        </pre>
+      </div>
+      <div class="side-text" onclick="toggleContent(2)">Column 2</div>
+    </div>
+
+    <div class="column" id="column3">
+      <div class="column-header">
+        <span class="column-title">Column 3</span>
+        <button class="button" onclick="toggleContent(3)"><i class="fas fa-compress-alt"></i></button>
+      </div>
+      <div class="column-content">
+        <p>Content of Column 3</p>
+      </div>
+      <div class="side-text" onclick="toggleContent(3)">Column 3</div>
+    </div>
+
+    <div class="column" id="column4">
+      <div class="column-header">
+        <span class="column-title">Column 4</span>
+        <button class="button" onclick="toggleContent(4)"><i class="fas fa-compress-alt"></i></button>
+      </div>
+      <div class="column-content">
+        <p>Content of Column 4</p>
+      </div>
+      <div class="side-text" onclick="toggleContent(4)">Column 4</div>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/js/all.min.js"></script>
+  <script>
+    function toggleContent(columnNumber) {
+      const column = document.getElementById('column' + columnNumber);
+      const content = column.querySelector('.column-content');
+      const button = column.querySelector('.button');
+      const sideText = column.querySelector('.side-text');
+      const header = column.querySelector('.column-header');
+
+      if (column.classList.contains('minimized')) {
+        column.classList.remove('minimized');
+        content.classList.remove('hidden');
+        sideText.style.display = 'none';
+        button.classList.remove('hidden');
+        header.style.display = 'flex';
+        button.innerHTML = '<i class="fas fa-compress-alt"></i>';
+      } else {
+        column.classList.add('minimized');
+        content.classList.add('hidden');
+        sideText.style.display = 'block';
+        button.classList.add('hidden');
+        header.style.display = 'none';
+      }
+    }
+
+    document.addEventListener("DOMContentLoaded", (event) => {
+      document
+        .getElementById("connectButton")
+        .addEventListener("click", function () {
+          let port = document.getElementById("port").value;
+          let ws_url = "ws://localhost:7777/connect-ws";
+          let socket;
+
+          try {
+            socket = new WebSocket(ws_url);
+          } catch (error) {
+            console.error("WebSocket initialization error:", error);
+            return;
+          }
+
+          socket.addEventListener("open", function (event) {
+            console.log("WebSocket is connected.");
+
+            let nrepl_url = "http://localhost:7777/connect-nrepl/" + port;
+            fetch(nrepl_url)
+              .then((response) => response.text())
+              .then((data) => console.log(data))
+              .catch((error) => console.error("Error:", error));
+          });
+
+          socket.addEventListener("message", function (event) {
+            console.log("Message from server:", event.data);
+          });
+
+          socket.addEventListener("error", function (event) {
+            console.error("WebSocket error:", event);
+          });
+
+          socket.addEventListener("close", function (event) {
+            console.log("WebSocket connection closed:", event);
+          });
+
+          window.addEventListener("beforeunload", function () {
+            if (socket) {
+              socket.close();
+            }
+          });
+        });
+    });
+  </script>
+</body>
+
+</html>

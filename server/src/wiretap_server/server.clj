@@ -78,7 +78,12 @@
       (commands/load-wiretap! nrepl-port))))
 
 
-(def routes [{:path "/"
+(def routes [{:path "/test"
+              :method :get
+              :response (fn [_]
+                          {:status 200
+                           :body (slurp (io/resource "public/test.html"))})}
+             {:path "/"
               :method :get
               :response (fn [_]
                           {:status 200
