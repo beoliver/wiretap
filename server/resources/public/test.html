@@ -9,6 +9,15 @@
     /* Import Google Font for modern typography */
     @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap');
 
+    :root {
+      --red: rgb(198, 52, 81);
+      --green: #009966;
+      --blue: #003366;
+      --grey: #2f4f4f;
+      --purple: rgb(85, 85, 142);
+      --white: #ffffff;
+    }
+
     html,
     body {
       height: 100%;
@@ -72,26 +81,24 @@
 
     /* Header colors reflect the column colors */
     #column1 .column-header {
-      background-color: rgb(198, 52, 81);
-      background-color: #4d0000;
-      background-color: #cc3333;
+      /* background-color: #cc3333; */
+      background-color: var(--red);
     }
 
-    #column2 .column-header {
-      background-color: #4f9865;
-      background-color: #2f4f2f;
-      background-color: #009966;
+    #column2 .column-header {   
+      background-color: var(--green);      
     }
 
-    #column3 .column-header {
-      background-color: #1e8fe4;
-      background-color: #003366;
-      /* background-color: #3857b3; */
+    #column3 .column-header {      
+      background-color: var(--blue);
     }
 
-    #column4 .column-header {
-      background-color: rgb(85, 85, 142);
-      background-color: #2f4f4f;
+    #column4 .column-header {      
+      background-color: var(--grey);
+    }
+
+    #column5 .column-header {
+      background-color: var(--purple);
     }
 
     .column-header {
@@ -124,24 +131,25 @@
 
     /* Updated color scheme for columns */
     #column1 {
-      background-color: #4f9865;
-      background-color: #cc3333;
+      background-color: var(--red);     
     }
 
     #column2 {
-      background-color: rgb(198, 52, 81);
-      background-color: #009966;
+      background-color: var(--green);            
     }
 
-    #column3 {
-      background-color: #1e8fe4;
-      background-color: #003366;
+    #column3 {      
+      background-color: var(--blue);
     }
 
-    #column4 {
-      background-color: rgb(85, 85, 142);
-      background-color: #2f4f4f;
+    #column4 {      
+      background-color:var(--grey);
     }
+
+    #column5 {
+      background-color: var(--purple);
+    }
+
 
     .big-box {
       height: 100%;
@@ -189,29 +197,44 @@
 
     <div class="column" id="column3">
       <div class="column-header" onclick="toggleContent(3)">
-        <span class="column-title">Column 3</span>        
+        <span class="column-title">Traces</span>        
       </div>
       <div class="column-content">
         <p>Content of Column 3</p>
       </div>
       <div  class="big-box" onclick="toggleContent(3)">
-        <div class="side-text">Column 3</div>
+        <div class="side-text">Traces</div>
       </div>
-
     </div>
 
     <div class="column" id="column4">
       <div class="column-header" onclick="toggleContent(4)">
-        <span class="column-title">Column 4</span>        
+        <span class="column-title">Data Viewer</span>        
       </div>
       <div class="column-content">
         <p>Content of Column 4</p>
       </div>
       <div  class="big-box" onclick="toggleContent(4)">
-        <div class="side-text">Column 4</div>
+        <div class="side-text">Data Viewer</div>
       </div>
     </div>
+
+    <div class="column" id="column5">
+      <div class="column-header" onclick="toggleContent(5)">
+        <span class="column-title">Blah</span>        
+      </div>
+      <div class="column-content">
+        <p>Content of Column 5</p>
+      </div>
+      <div  class="big-box" onclick="toggleContent(5)">
+        <div class="side-text">Blah</div>
+      </div>
+    </div>
+
   </div>
+
+
+
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/js/all.min.js"></script>
   <script>
