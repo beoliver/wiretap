@@ -23,8 +23,8 @@
       height: 100%;
       margin: 0;
       padding: 0;
-      font-family: 'Roboto', sans-serif; /* Updated font for a contemporary look */
-      color: #333; /* Updated text color for better readability */
+      font-family: 'Roboto', sans-serif;
+      color: #333;
     }
 
     body {
@@ -37,22 +37,27 @@
       display: flex;
       flex-direction: row;
       flex: 1;
+      height: 100%;
     }
 
     .column {
       flex: 1;
-      border-right: 1px solid #e0e0e0; /* Subtle border for separation */
+      border-right: 1px solid #e0e0e0;
       box-sizing: border-box;
       position: relative;
-      height: 100%;
-      min-width: 60px; /* Increased minimum width for better usability */
+      min-width: 60px;
       display: flex;
       flex-direction: column;
-      transition: flex 0.3s ease, background-color 0.3s ease; /* Smooth transition effects */
+      transition: flex 0.3s ease, background-color 0.3s ease;
+      height: 100%;
+    }
+
+    .column#column1 {
+      overflow: auto;
     }
 
     .column.minimized {
-      flex: 0 0 60px; /* Updated to match new min-width */
+      flex: 0 0 60px;
       padding: 0;
     }
 
@@ -69,9 +74,8 @@
     }
 
     .column-content {
-      overflow: auto;
       flex: 1;
-      padding: 15px; /* Increased padding for a more spacious feel */
+      padding: 15px;
       background-color: #FAF9F6;
     }
 
@@ -81,19 +85,18 @@
 
     /* Header colors reflect the column colors */
     #column1 .column-header {
-      /* background-color: #cc3333; */
       background-color: var(--red);
     }
 
-    #column2 .column-header {   
-      background-color: var(--green);      
+    #column2 .column-header {
+      background-color: var(--green);
     }
 
-    #column3 .column-header {      
+    #column3 .column-header {
       background-color: var(--blue);
     }
 
-    #column4 .column-header {      
+    #column4 .column-header {
       background-color: var(--grey);
     }
 
@@ -105,10 +108,10 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 15px; /* Updated padding for a more modern feel */
-      color: #ffffff; /* White text color for contrast */
-      border-bottom: 1px solid rgba(0,0,0,0.1); /* Subtle border for separation */
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1); /* Light shadow for depth */
+      padding: 15px;
+      color: #ffffff;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     }
 
     .button.hidden {
@@ -123,40 +126,37 @@
       transform: rotate(-90deg) translate(-50%, -50%);
       transform-origin: left top;
       white-space: nowrap;
-      /* background-color: #ffffff;  */
-      padding: 10px; /* Increased padding for better appearance */  
-      cursor: pointer;  
+      padding: 10px;
+      cursor: pointer;
       color: #ffffff;
     }
 
     /* Updated color scheme for columns */
     #column1 {
-      background-color: var(--red);     
+      background-color: var(--red);
     }
 
     #column2 {
-      background-color: var(--green);            
+      background-color: var(--green);
     }
 
-    #column3 {      
+    #column3 {
       background-color: var(--blue);
     }
 
-    #column4 {      
-      background-color:var(--grey);
+    #column4 {
+      background-color: var(--grey);
     }
 
     #column5 {
       background-color: var(--purple);
     }
 
-
     .big-box {
       height: 100%;
-      width: 100%;      
-      display: none;      
+      width: 100%;
+      display: none;
     }
-
   </style>
 </head>
 
@@ -170,19 +170,17 @@
   <div class="columns-container">
     <div class="column" id="column1">
       <div class="column-header" onclick="toggleContent(1)">
-        <span class="column-title">Column 1</span>        
+        <span class="column-title">Column 1</span>
       </div>
-      <div class="column-content">
-        <p>Content of Column 1</p>
-      </div>      
-      <div  class="big-box" onclick="toggleContent(1)">
+      <div class="column-content"></div>
+      <div class="big-box" onclick="toggleContent(1)">
         <div class="side-text">Column 1</div>
       </div>
     </div>
 
     <div class="column" id="column2">
       <div class="column-header" onclick="toggleContent(2)">
-        <span class="column-title">Column 2</span>        
+        <span class="column-title">Column 2</span>
       </div>
       <div class="column-content">
         <p>Content of Column 2</p>
@@ -190,43 +188,43 @@
         This is some code {very exciting!} but how (long does it go on for?)
         </pre>
       </div>
-      <div  class="big-box" onclick="toggleContent(2)">
+      <div class="big-box" onclick="toggleContent(2)">
         <div class="side-text">Column 2</div>
       </div>
     </div>
 
     <div class="column" id="column3">
       <div class="column-header" onclick="toggleContent(3)">
-        <span class="column-title">Traces</span>        
+        <span class="column-title">Traces</span>
       </div>
       <div class="column-content">
         <p>Content of Column 3</p>
       </div>
-      <div  class="big-box" onclick="toggleContent(3)">
+      <div class="big-box" onclick="toggleContent(3)">
         <div class="side-text">Traces</div>
       </div>
     </div>
 
     <div class="column" id="column4">
       <div class="column-header" onclick="toggleContent(4)">
-        <span class="column-title">Data Viewer</span>        
+        <span class="column-title">Data Viewer</span>
       </div>
       <div class="column-content">
         <p>Content of Column 4</p>
       </div>
-      <div  class="big-box" onclick="toggleContent(4)">
+      <div class="big-box" onclick="toggleContent(4)">
         <div class="side-text">Data Viewer</div>
       </div>
     </div>
 
     <div class="column" id="column5">
       <div class="column-header" onclick="toggleContent(5)">
-        <span class="column-title">Blah</span>        
+        <span class="column-title">Blah</span>
       </div>
       <div class="column-content">
         <p>Content of Column 5</p>
       </div>
-      <div  class="big-box" onclick="toggleContent(5)">
+      <div class="big-box" onclick="toggleContent(5)">
         <div class="side-text">Blah</div>
       </div>
     </div>
@@ -240,23 +238,43 @@
   <script>
     function toggleContent(columnNumber) {
       const column = document.getElementById('column' + columnNumber);
-      const content = column.querySelector('.column-content');      
+      const content = column.querySelector('.column-content');
       const bigBox = column.querySelector('.big-box');
       const header = column.querySelector('.column-header');
 
-      console.log('bigBox', bigBox);
-
-      if (column.classList.contains('minimized')) {        
+      if (column.classList.contains('minimized')) {
         column.classList.remove('minimized');
-        content.classList.remove('hidden');        
-        bigBox.style.display = 'none';            
-        header.style.display = 'flex';        
-      } else {        
+        content.classList.remove('hidden');
+        bigBox.style.display = 'none';
+        header.style.display = 'flex';
+      } else {
         column.classList.add('minimized');
-        content.classList.add('hidden');        
-        bigBox.style.display = 'block';            
+        content.classList.add('hidden');
+        bigBox.style.display = 'block';
         header.style.display = 'none';
       }
+    }
+
+    function fetch_loaded_libs(result_fn) {
+      fetch('http://localhost:7777/loaded-libs')
+        .then(response => response.json())
+        .then(data => result_fn(data))
+        .catch(error => console.error('Error:', error));
+    }
+
+    function update_loaded_libs(column_id) {
+      const column = document.getElementById(column_id);
+      const content = column.querySelector('.column-content');
+      fetch_loaded_libs((libs) => {
+        libs.forEach((lib) => {
+          const p = document.createElement('p');
+          p.textContent = lib;
+          content.appendChild(p);
+        });
+
+        console.log(libs);
+      });
+
     }
 
     document.addEventListener("DOMContentLoaded", (event) => {
@@ -280,7 +298,10 @@
             let nrepl_url = "http://localhost:7777/connect-nrepl/" + port;
             fetch(nrepl_url)
               .then((response) => response.text())
-              .then((data) => console.log(data))
+              .then((data) => {
+                console.log(data);
+                update_loaded_libs('column1');
+              })
               .catch((error) => console.error("Error:", error));
           });
 

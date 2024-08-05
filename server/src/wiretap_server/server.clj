@@ -8,7 +8,10 @@
 
 ;; https://github.com/askonomm/ruuter?tab=readme-ov-file
 
-(def empty-state {:socket nil :server nil :websocket-ch nil})
+(def empty-state {:nrepl-port nil
+                  :socket nil 
+                  :server nil 
+                  :websocket-ch nil})
 
 (defonce state (atom empty-state))
 
@@ -67,6 +70,7 @@
   (if-not (:websocket-ch @state)
     {:status 500}
     (let [nrepl-port (Long/parseLong (:nrepl-port params))]
+      (swap! state assoc :nrepl-port nrepl-port)
       (log/info {:nrepl-port nrepl-port})
       (init-event-socket! 9876
                           (fn [edn]
@@ -76,6 +80,12 @@
                                 (server/send! websocket-ch (json/encode edn)))
                               (log/info edn))))
       (commands/load-wiretap! nrepl-port))))
+
+(defn loaded-libs-handler [_]
+  (let [symbol-set (commands/exec-loaded-libs! (:nrepl-port @state))]
+    {:status 200
+     :headers {"Content-Type" "application/json"}
+     :body (json/encode symbol-set)}))
 
 
 (def routes [{:path "/test"
@@ -110,6 +120,9 @@
              {:path "/connect-nrepl/:nrepl-port"
               :method :get
               :response nrepl-connect-handler}
+             {:path "/loaded-libs"
+              :method :get
+              :response loaded-libs-handler}
              {:path "/wiretapped/:id/arg/:index"
               :method :get
               :response {:status 200
@@ -134,7 +147,7 @@
          (catch Exception e (log/error e))))
   (when-some [socket (:socket @state)]
     (try (.close socket)
-         (catch Exception e (log/error e))))
+         (catch Exception e (log/error e)))) 
   (let [server (server/run-server #'app {:port port})]
     (log/info (str "Server started on port " port)) 
     (reset! state (assoc empty-state :server server))))

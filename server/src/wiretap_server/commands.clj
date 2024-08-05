@@ -18,3 +18,9 @@
   (let [expr "(wiretap.wiretap/uninstall!)"]
     (nrepl-client/eval-expr {:host "localhost" :port nrepl-port :expr expr})))
 
+(defn exec-loaded-libs! [nrepl-port] 
+  (->> {:host "localhost" :port nrepl-port :expr "(loaded-libs)"}
+       (nrepl-client/eval-expr)
+       :vals
+       first
+       read-string))
