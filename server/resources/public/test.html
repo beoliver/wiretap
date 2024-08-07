@@ -157,6 +157,38 @@
       width: 100%;
       display: none;
     }
+
+    .trace-container {
+      background-color: rgb(236, 236, 221);
+      font-size: 1.2em;
+      padding: 1em;
+      margin: 1em;
+    }
+
+    .trace {
+      border-bottom: 2px solid rgb(198, 52, 81);
+      border-left: 2px solid rgb(198, 52, 81);
+      border-radius: 5px;
+      padding: 0.3em;
+      margin: 0.3em;
+    }
+
+    .type-separator {
+      /* ie ':' */
+      font-family: monospace;
+      margin-left: 0.5em;
+    }
+
+
+    .type {
+      font-family: monospace;
+      margin-left: 0.5em;
+    }
+
+    .type:hover {
+      cursor: pointer;
+      background-color: lightblue;
+    }
   </style>
 </head>
 
@@ -198,7 +230,94 @@
         <span class="column-title">Traces</span>
       </div>
       <div class="column-content">
-        <p>Content of Column 3</p>
+        <div id="traces">
+          <div class="trace-container">
+            <div class="trace">
+              <details>
+                <summary><code>bidi.bidi/foo</code><button>String</button></summary>
+                <table>
+                  <tr>
+                    <th>Binding</th>
+                    <th>Value</th>
+                  </tr>
+                  <tr>
+                    <td><code>x</code></td>
+                    <td><button>PersistentVector</button></td>
+                  </tr>
+                  <tr>
+                    <td><code>y</code></td>
+                    <td><button>String</button></td>
+                  </tr>
+                  <tr>
+                    <td><code>& args</code></td>
+                    <td><button>ZZZ</button></td>
+                  </tr>
+                </table>
+                <details>
+                  <summary>bidi.bidi/bar</summary>
+                </details>
+              </details>
+            </div>
+          </div>
+          <div class="trace-container">
+            <div class="trace">
+              <details>
+                <summary><code>bidi.bidi/foo</code><button>String</button></summary>
+                <table>
+                  <tr>
+                    <th>Binding</th>
+                    <th>Value</th>
+                  </tr>
+                  <tr>
+                    <td><code>x</code></td>
+                    <td><button>PersistentVector</button></td>
+                  </tr>
+                  <tr>
+                    <td><code>y</code></td>
+                    <td><button>String</button></td>
+                  </tr>
+                  <tr>
+                    <td><code>& args</code></td>
+                    <td><button>ZZZ</button></td>
+                  </tr>
+                </table>
+                <details>
+                  <summary>bidi.bidi/bar</summary>
+                </details>
+              </details>
+            </div>
+          </div>
+          <div class="trace-container">
+            <div class="trace">
+              <details>
+                <summary><code>bidi.bidi/baz</code><button>Integer</button></summary>
+                <ul>
+                  <li><code>x</code><span><button>PersistentVector</button></span></li>
+                  <li><code>y</code><button>String</button></li>
+                  <li><code>& args</code><button>ZZZ</button></li>
+                </ul>
+                <details>
+                  <summary>bidi.bidi/bar</summary>
+                </details>
+              </details>
+            </div>
+          </div>
+          <div class="trace-container">
+            <div class="trace">
+              <details>
+                <summary><code>bidi.bidi/baz : Integer</code></summary>
+                <ul>
+                  <li><code>x</code><span class="type-separator">:</span><span class="type">PersistentVector</span></li>
+                  <li><code>y</code><span class="type-separator">:</span><span class="type">String</span></li>
+                  <li><code>& args</code><span><code> : ...</code></span></li>
+                </ul>
+                <details>
+                  <summary>bidi.bidi/bar</summary>
+                </details>
+              </details>
+            </div>
+          </div>
+        </div>
       </div>
       <div class="big-box" onclick="toggleContent(3)">
         <div class="side-text">Traces</div>
