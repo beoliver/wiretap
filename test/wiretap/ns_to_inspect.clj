@@ -38,4 +38,3 @@
 
 (defmethod my-multi :dog [{:keys [name]}]
   {:the-dog name})
-

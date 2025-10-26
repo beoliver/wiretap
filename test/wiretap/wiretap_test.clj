@@ -178,3 +178,17 @@
 
 (comment
   (run! (partial ns-unmap *ns*) (keys (ns-interns *ns*))))
+
+(test/deftest wiretap-twice-test
+  (let [state1 (atom [])
+        state2 (atom [])]
+    (wiretap/install! #(swap! state1 conj %) vars-of-interest)
+    (sut/call-simple 1)
+    (test/is (count @state1) 2)
+    (test/is (count @state2) 0)
+    (test/testing "Wiretapping with a second listener replaces the first"
+      (reset! state1 [])
+      (wiretap/install! #(swap! state2 conj %) vars-of-interest)
+      (sut/call-simple 1)
+      (test/is (count @state1) 2)
+      (test/is (count @state2) 2))))
