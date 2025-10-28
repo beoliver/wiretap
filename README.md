@@ -23,7 +23,7 @@ This library provides a small set of tools that help you to observe the executio
 
 As a git dep:
 ```clojure
-io.github.beoliver/wiretap {:git/sha "7688a8e"}
+io.github.beoliver/wiretap {:git/sha "12a3640"}
 ```
 As a Maven dep:
 ```clojure
@@ -47,7 +47,7 @@ The simplest way to use wiretap is with the `record` namespace:
 (rec/playback recorder)
 
 ;; Access raw events for analysis
-@(:events recorder)
+(rec/events recorder)
 
 ;; Clean up when done
 (rec/stop! recorder)
@@ -95,13 +95,14 @@ Glob patterns use `*` and `**` wildcards to match namespaces:
 
 ;; Access events directly for custom analysis
 (def events (rec/events recorder))
-;; Or: @(:events recorder)
 
 ;; Filter for specific functions
-(->> events
-     (filter :post?)
-     (filter #(= 'fetch-user (:name %)))
-     (map :result))
+
+(->> (rec/events recorder)
+     (into []
+       (comp (filter :post?)
+             (filter #(= 'fetch-user (:name %)))
+             (map :result))))
 
 ;; Clear recorded events (keeps recording)
 (rec/wipe! recorder)
@@ -388,11 +389,11 @@ clj -X:test
 # Test in the REPL
 
 ```
-clj -Sdeps '{:deps {wiretap/wiretap {:git/url "https://github.com/beoliver/wiretap/" :git/sha "de8814d6d46eed26f15c3878e59927552eee904c"}}}' -e "(require '[wiretap.wiretap :as wiretap] '[wiretap.tools :as wiretap-tools])" -r
+clj -Sdeps '{:deps {wiretap/wiretap {:git/url "https://github.com/beoliver/wiretap/" :git/sha "12a3640"}}}' -e "(require '[wiretap.wiretap :as wiretap] '[wiretap.tools :as wiretap-tools])" -r
 ```
 
 ```clojure
-Checking out: https://github.com/beoliver/wiretap/ at de8814d6d46eed26f15c3878e59927552eee904c
+Checking out: https://github.com/beoliver/wiretap/ at 12a3640994ff8241cdd38995d16c481bcf143c53
 WARNING: Implicit use of clojure.main with options is deprecated, use -M
 user=> (def foo (fn [x] (+ x x)))
 #'user/foo
