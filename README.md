@@ -19,24 +19,105 @@
 
 This library provides a small set of tools that help you to observe the execution of functions and multimethods. It is designed to be used in (dev) environments where you want to gain insights without having to modify/annotate code.
 
-Any [var](https://clojure.org/reference/vars) whose value is an instance of Fn or MultiFn (i.e was created via [`fn`](https://clojure.github.io/clojure/clojure.core-api.html#clojure.core/fn) or [`defmulti`](https://clojure.github.io/clojure/clojure.core-api.html#clojure.core/defmulti)) can be wiretapped. 
-
-As a user of the library, you provide a function that will be called before and/or after any wiretapped function or method is invoked. This function can be used to perform any side effecting operations - for example swapping values in an atom, or simply calling `println`. This custom function is passed a context map that contains information about the invocation of the var - the values vary depending on whether the function is called before or after the invocation. For more information see [wiretap context](#wiretap-context).
-
-This pre/post pattern captures the essence of a trace, however wiretap can be used for multiple different purposes.
-
 # Releases
 
 As a git dep:
 ```clojure
-io.github.beoliver/wiretap {:git/sha "7688a8e"}
+io.github.beoliver/wiretap {:git/sha "12a3640"}
 ```
 As a Maven dep:
 ```clojure
 io.github.beoliver/wiretap {:mvn/version "0.0.17"}
 ```
 
-# A Simple Example
+# Quick Start
+
+The simplest way to use wiretap is with the `record` namespace:
+
+```clojure
+(require '[wiretap.record :as rec])
+
+;; Start recording all functions in a namespace
+(def recorder (rec/start! {:globs ["my-app.core"]}))
+
+;; Run your code
+(my-app.core/some-function 42)
+
+;; Play back the formatted trace
+(rec/playback recorder)
+
+;; Access raw events for analysis
+(rec/events recorder)
+
+;; Clean up when done
+(rec/stop! recorder)
+```
+
+## Recording with glob patterns
+
+Glob patterns use `*` and `**` wildcards to match namespaces:
+
+```clojure
+;; * matches a single namespace segment
+(rec/start! {:globs ["my-app.*.utils"]})
+;; Matches: my-app.core.utils, my-app.web.utils
+;; Does NOT match: my-app.utils, my-app.core.web.utils
+
+;; ** matches zero or more segments
+(rec/start! {:globs ["my-app.**"]})
+;; Matches: my-app.core, my-app.core.utils, my-app.web.handlers.auth
+
+;; Record multiple patterns
+(rec/start! {:globs ["my-app.core" "my-app.util.*"]})
+
+;; Record specific functions
+(rec/start! {:vars [#'my-app.core/foo #'other.ns/bar]})
+
+;; Combine both approaches
+(rec/start! {:globs ["my-app.**"]
+             :vars [#'other.ns/helper]})
+```
+
+## Working with recordings
+
+```clojure
+(def recorder (rec/start! {:globs ["my-app.**"]}))
+
+;; Run some code to generate events
+(my-app.core/process-data {:user-id 123})
+
+;; Display formatted trace output
+(rec/playback recorder)
+;; TRACE t123: (my-app.core/process-data {:user-id 123})
+;; TRACE t124: | (my-app.db/fetch-user 123)
+;; TRACE t124: | => {:id 123 :name "Alice"}
+;; TRACE t123: => {:processed true}
+
+;; Access events directly for custom analysis
+(def events (rec/events recorder))
+
+;; Filter for specific functions
+
+(->> (rec/events recorder)
+     (into []
+       (comp (filter :post?)
+             (filter #(= 'fetch-user (:name %)))
+             (map :result))))
+
+;; Clear recorded events (keeps recording)
+(rec/wipe! recorder)
+
+;; Stop recording and restore original functions
+(rec/stop! recorder)
+```
+
+# How it Works
+
+Wiretap works by wrapping function calls. Any [var](https://clojure.org/reference/vars) whose value is an instance of Fn or MultiFn (created via [`fn`](https://clojure.github.io/clojure/clojure.core-api.html#clojure.core/fn) or [`defmulti`](https://clojure.github.io/clojure/clojure.core-api.html#clojure.core/defmulti)) can be wiretapped.
+
+As a user of the library, you provide a function that will be called before and/or after any wiretapped function or method is invoked. This function can be used to perform any side effecting operations - for example swapping values in an atom, or simply calling `println`. This custom function is passed a context map that contains information about the invocation of the var. For more information see [wiretap context](#wiretap-context).
+
+## A Simple Example
 
 ```clojure
 (ns user)
@@ -56,7 +137,6 @@ user=> (+ 10 (bar 1))
 < bar
 11
 ```
-
 
 # Supported Types
 
@@ -96,12 +176,47 @@ If the wiretapped var is a multimethod then the following information will also 
 | `:multimethod?`  | pre/post | `true`                                                      |
 | `:dispatch-val`  | pre/post | The dispatch value used to select the method.               |
 
-# API
+# API Overview
+
+## `wiretap.record` - High-level recording API
+
+For most use cases - simple recording and playback:
+
+- `(start! {:globs [...] :vars [...]})` - Start recording matching functions
+- `(events recorder)` - Get vector of recorded events
+- `(playback recorder)` - Display formatted trace to console
+- `(wipe! recorder)` - Clear recorded events (keeps recording)
+- `(stop! recorder)` - Stop recording and restore original functions
+
+Returns a "recorder" map with `:vars` and `:events` keys.
+
+## `wiretap.wiretap` - Low-level wiretap API
+
+For custom tracers and advanced use cases:
+
+- `(install! tracer-fn vars)` - Install custom tracer on vars
+- `(install-pre! tracer-fn vars)` - Tracer called only before invocation
+- `(install-post! tracer-fn vars)` - Tracer called only after invocation
+- `(uninstall! vars)` - Remove wiretap from vars
+- `(uninstall!)` - Remove all wiretaps
+
+Your tracer function receives the [context map](#wiretap-context) on each call.
+
+## `wiretap.tools` - Utility functions
+
+Helper functions for working with vars and traces:
+
+- `(glob-regex pattern)` - Convert glob string to regex Pattern
+- `(ns-matches regex)` - Find namespace symbols matching regex
+- `(ns-matches-vars regex)` - Find vars in matching namespaces
+- `(globs-vars glob-patterns)` - Find vars matching glob patterns
+- `(ns-vars & namespaces)` - Get all vars from namespaces
+- `(wiretapped? var)` - Check if var is currently wiretapped
+- `(display-trace events)` - Format and print event sequence
 
 Documentation hosted [here](https://beoliver.github.io/wiretap/index.html)
 
 # Examples
-
 
 ## Multimethods
 
@@ -182,6 +297,8 @@ To show how wiretap events can be used - we will generate traces similar to thos
 ```
 To make things interesting - we will **persist** all of the contexts and then run our trace function on the data. Repeatable traces!
 ```clojure
+user=> (require '[wiretap.tools :as tools])
+nil
 user=> (def history (atom []))
 #'user/history
 user=> (wiretap/install! #(swap! history conj %) (tools/ns-vars *ns*))
@@ -197,6 +314,24 @@ TRACE t8020: | | (user/simple 1)
 TRACE t8020: | | => 2
 TRACE t8019: | => 2
 TRACE t8018: => 2
+nil
+```
+
+Or using the `record` namespace:
+```clojure
+user=> (require '[wiretap.record :as rec])
+nil
+user=> (def recorder (rec/start! {:globs ["user"]}))
+#'user/recorder
+user=> (pass-simple 1)
+2
+user=> (rec/playback recorder)
+TRACE t8021: (user/pass-simple 1)
+TRACE t8022: | (user/call-f #function[clojure.lang.AFunction/1] 1)
+TRACE t8023: | | (user/simple 1)
+TRACE t8023: | | => 2
+TRACE t8022: | => 2
+TRACE t8021: => 2
 nil
 ```
 
@@ -223,12 +358,18 @@ Now that we have a _history_ of events, we can perform other operations on them!
 ```
 We can now use the function to infer the spec of the _return_ value for a function - even if we never called it directly.
 ```clojure
-=> (return-spec @history #'simple)
+=> (result-spec @history #'simple)
 (spec/def ::simple integer?)
 => (call-f simple 2.0)
 3.0
-=> (return-spec @history #'simple)
+=> (result-spec @history #'simple)
 (spec/def ::simple (spec/or :double double? :integer integer?))
+```
+
+Or using the `record` namespace:
+```clojure
+=> (result-spec (rec/events recorder) #'simple)
+(spec/def ::simple integer?)
 ```
 
 
@@ -248,11 +389,11 @@ clj -X:test
 # Test in the REPL
 
 ```
-clj -Sdeps '{:deps {wiretap/wiretap {:git/url "https://github.com/beoliver/wiretap/" :git/sha "de8814d6d46eed26f15c3878e59927552eee904c"}}}' -e "(require '[wiretap.wiretap :as wiretap] '[wiretap.tools :as wiretap-tools])" -r
+clj -Sdeps '{:deps {wiretap/wiretap {:git/url "https://github.com/beoliver/wiretap/" :git/sha "12a3640"}}}' -e "(require '[wiretap.wiretap :as wiretap] '[wiretap.tools :as wiretap-tools])" -r
 ```
 
 ```clojure
-Checking out: https://github.com/beoliver/wiretap/ at de8814d6d46eed26f15c3878e59927552eee904c
+Checking out: https://github.com/beoliver/wiretap/ at 12a3640994ff8241cdd38995d16c481bcf143c53
 WARNING: Implicit use of clojure.main with options is deprecated, use -M
 user=> (def foo (fn [x] (+ x x)))
 #'user/foo
