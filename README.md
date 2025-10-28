@@ -27,7 +27,7 @@ io.github.beoliver/wiretap {:git/sha "12a3640"}
 ```
 As a Maven dep:
 ```clojure
-io.github.beoliver/wiretap {:mvn/version "0.0.17"}
+io.github.beoliver/wiretap {:mvn/version "0.0.20"}
 ```
 
 # Quick Start
